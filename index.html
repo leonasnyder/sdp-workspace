@@ -7,7 +7,7 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 :root{
-  --blue:#2563eb; --blue-dark:#1e40af; --blue-light:#eff4ff;
+  --blue:#f97316; --blue-dark:#c2410c; --blue-light:#fff4ec;
   --green:#15803d; --green-light:#ecfdf3;
   --amber:#b45309; --amber-light:#fef7e7;
   --red:#dc2626; --red-light:#fef1f1;
@@ -18,7 +18,7 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:linear-gradient(180deg,#eef2f7 0%,var(--bg) 240px);color:var(--ink);font-size:15px;line-height:1.5}
-header{background:linear-gradient(120deg,#1e3a8a 0%,#2563eb 55%,#0ea5e9 130%);color:#fff;padding:18px 26px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;box-shadow:0 2px 12px rgba(30,58,138,.25)}
+header{background:linear-gradient(120deg,#9a3412 0%,#f97316 60%,#0ea5e9 145%);color:#fff;padding:18px 26px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;box-shadow:0 2px 12px rgba(154,52,18,.25)}
 header h1{font-size:20px;font-weight:700;letter-spacing:-.02em}
 header .sub{font-size:12.5px;opacity:.85}
 .hdr-btns{display:flex;gap:8px}
@@ -26,7 +26,7 @@ header .sub{font-size:12.5px;opacity:.85}
 .hdr-btns button:hover{background:rgba(255,255,255,.28)}
 nav{display:flex;gap:4px;background:#fff;border-bottom:1px solid var(--line);padding:8px 16px;overflow-x:auto;position:sticky;top:0;z-index:50;box-shadow:0 1px 4px rgba(15,23,42,.05)}
 nav button{border:none;background:none;padding:9px 14px;font-size:13.5px;cursor:pointer;color:var(--muted);border-radius:10px;white-space:nowrap;font-weight:500;transition:all .15s}
-nav button.active{color:#fff;background:var(--blue);font-weight:600;box-shadow:0 2px 8px rgba(37,99,235,.35)}
+nav button.active{color:#fff;background:var(--blue);font-weight:600;box-shadow:0 2px 8px rgba(249,115,22,.35)}
 nav button:hover:not(.active){color:var(--blue-dark);background:var(--blue-light)}
 main{padding:20px;max-width:1200px;margin:0 auto}
 .view{display:none}
@@ -46,8 +46,8 @@ label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:1
 input,select,textarea{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink)}
 textarea{min-height:70px;resize:vertical}
 input:focus,select:focus,textarea:focus{outline:2px solid var(--blue-light);border-color:var(--blue)}
-button.btn{background:linear-gradient(120deg,var(--blue),#1d4ed8);color:#fff;border:none;padding:9px 18px;border-radius:9px;font-size:14px;cursor:pointer;font-weight:600;margin-top:12px;box-shadow:0 2px 6px rgba(37,99,235,.3);transition:all .15s}
-button.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(37,99,235,.4)}
+button.btn{background:linear-gradient(120deg,var(--blue),#ea580c);color:#fff;border:none;padding:9px 18px;border-radius:9px;font-size:14px;cursor:pointer;font-weight:600;margin-top:12px;box-shadow:0 2px 6px rgba(249,115,22,.3);transition:all .15s}
+button.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(249,115,22,.4)}
 button.btn.secondary{background:#fff;color:var(--blue);border:1px solid var(--blue)}
 button.btn.danger{background:#fff;color:var(--red);border:1px solid var(--red)}
 button.btn.small{padding:5px 10px;font-size:12.5px;margin-top:0}
@@ -1813,23 +1813,23 @@ async function reportPdf(cid){
   catch(e){ alert("Building a PDF needs an internet connection the first time (to load the PDF library). Alternative: Preview → Print → choose 'Save as PDF'."); return; }
   const doc=new jspdf.jsPDF();
   const sp=spentTotal(c), rem=c.budget-sp, up=Math.round(utilization(c)), yp=planYearPct(c), py=planYearInfo(c);
-  doc.setFontSize(15); doc.setTextColor(26,95,168);
+  doc.setFontSize(15); doc.setTextColor(234,88,12);
   doc.text("SDP Budget Update — "+c.name,14,16);
   doc.setFontSize(9.5); doc.setTextColor(90,90,90);
   doc.text("Prepared "+new Date().toLocaleDateString()+" by your Independent Facilitator  ·  Regional center: "+(c.rc||"—")+(py?"  ·  Plan year "+fmtDate(py.start)+" to "+fmtDate(py.end):""),14,22);
   doc.autoTable({startY:27,head:[["Annual budget","Spent to date","Remaining","% used","% of year",py&&!py.over?"Months left":"", py&&!py.over&&py.remaining>0?"Avail / month":""].filter(x=>x!=="")],
     body:[[money(+c.budget),money(sp),money(rem),up+"%",yp===null?"—":yp+"%",py&&!py.over?String(py.remaining):"",py&&!py.over&&py.remaining>0?money(rem/py.remaining):""].filter((x,i,a)=>x!==""||i<5)],
-    styles:{fontSize:8.5},headStyles:{fillColor:[26,95,168]}});
+    styles:{fontSize:8.5},headStyles:{fillColor:[234,88,12]}});
   const body=c.plan.map(i=>{
     const s2=spentForItem(c,i.id); const pm=perMonthLeft(c,(+i.annual||0)-s2);
     return [i.code,i.desc,money(+i.annual),money(s2),money((+i.annual||0)-s2),pm||"-"];
   });
   doc.autoTable({startY:doc.lastAutoTable.finalY+6,head:[["Code","Service","Annual","Spent","Remaining","Per month left"]],body,
-    styles:{fontSize:8.5},headStyles:{fillColor:[26,95,168]},columnStyles:{1:{cellWidth:60}}});
+    styles:{fontSize:8.5},headStyles:{fillColor:[234,88,12]},columnStyles:{1:{cellWidth:60}}});
   let y=doc.lastAutoTable.finalY+8;
   const al=clientAlerts(c);
   if(al.length){
-    doc.setFontSize(11); doc.setTextColor(26,95,168); doc.text("Things to watch",14,y); y+=5;
+    doc.setFontSize(11); doc.setTextColor(234,88,12); doc.text("Things to watch",14,y); y+=5;
     doc.setFontSize(9); doc.setTextColor(40,40,40);
     al.forEach(a=>{ const lines=doc.splitTextToSize("• "+a.msg,180); doc.text(lines,14,y); y+=lines.length*4.2+1; });
   }
@@ -1875,29 +1875,29 @@ function gateTry(){
 }
 function landingHtml(){
   const card=(icon,t,d)=>'<div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:24px;box-shadow:0 1px 3px rgba(15,23,42,.07)"><div style="font-size:30px">'+icon+'</div><h3 style="margin:10px 0 6px;color:#0f172a;font-size:17px">'+t+'</h3><p style="color:#64748b;font-size:14px;line-height:1.55;margin:0">'+d+'</p></div>';
-  const step=(n,t,d)=>'<div><div style="font-size:13px;font-weight:800;color:#2563eb;letter-spacing:.1em">'+n+'</div><h3 style="margin:6px 0;color:#0f172a;font-size:17px">'+t+'</h3><p style="color:#64748b;font-size:14px;line-height:1.55;margin:0">'+d+'</p></div>';
+  const step=(n,t,d)=>'<div><div style="font-size:13px;font-weight:800;color:#ea580c;letter-spacing:.1em">'+n+'</div><h3 style="margin:6px 0;color:#0f172a;font-size:17px">'+t+'</h3><p style="color:#64748b;font-size:14px;line-height:1.55;margin:0">'+d+'</p></div>';
   return '<div style="font-family:Inter,-apple-system,sans-serif">'+
-  '<div style="background:linear-gradient(135deg,#1e3a8a,#2563eb 55%,#0ea5e9 120%);color:#fff;padding:64px 24px 72px;text-align:center">'+
+  '<div style="background:linear-gradient(135deg,#9a3412,#f97316 58%,#0ea5e9 135%);color:#fff;padding:64px 24px 72px;text-align:center">'+
     '<div style="font-size:13px;font-weight:700;letter-spacing:.22em;opacity:.85">HORIZONS OF HOPE</div>'+
     '<h1 style="font-size:clamp(30px,5vw,52px);font-weight:800;letter-spacing:-.03em;margin:14px auto 0;max-width:760px;line-height:1.12">Every client, every dollar,<br>every goal.</h1>'+
     '<p style="font-size:17px;opacity:.92;max-width:640px;margin:18px auto 0;line-height:1.6">A complete workspace for Independent Facilitators in California&#39;s Self-Determination Program — clients, budgets, spending plans, goals, compliance, and documents in one place.</p>'+
     '<div style="background:#fff;border-radius:16px;padding:22px;max-width:400px;margin:30px auto 0;box-shadow:0 16px 50px rgba(0,0,0,.3)">'+
       '<p style="color:#0f172a;font-weight:700;margin:0 0 10px">🗝️ Invite-only access</p>'+
       '<input id="gateCode" placeholder="Enter your access code" style="width:100%;box-sizing:border-box;padding:12px;border:1px solid #e2e8f0;border-radius:10px;font-size:15px;text-align:center;letter-spacing:.05em" onkeydown="if(event.key===&quot;Enter&quot;)gateTry()">'+
-      '<button onclick="gateTry()" style="width:100%;margin-top:10px;padding:12px;border:none;border-radius:10px;background:linear-gradient(120deg,#2563eb,#1d4ed8);color:#fff;font-size:15px;font-weight:700;cursor:pointer">Enter Workspace</button>'+
+      '<button onclick="gateTry()" style="width:100%;margin-top:10px;padding:12px;border:none;border-radius:10px;background:linear-gradient(120deg,#f97316,#ea580c);color:#fff;font-size:15px;font-weight:700;cursor:pointer">Enter Workspace</button>'+
       '<p id="gateMsg" style="color:#dc2626;font-size:13px;margin:8px 0 0;min-height:16px"></p>'+
       '<p style="color:#94a3b8;font-size:12px;margin:6px 0 0">Ask your facilitator for a code</p>'+
     '</div>'+
     '<p style="font-size:13px;opacity:.75;margin-top:22px">Your data never leaves your browser · Works with Google Docs, Sheets &amp; Slides</p>'+
   '</div>'+
   '<div style="max-width:1020px;margin:0 auto;padding:56px 24px">'+
-    '<div style="text-align:center;margin-bottom:30px"><div style="color:#2563eb;font-weight:700;font-size:13px;letter-spacing:.15em">WHAT IT DOES</div><h2 style="font-size:30px;color:#0f172a;margin:8px 0 0;letter-spacing:-.02em">Everything an IF needs, in one place</h2></div>'+
+    '<div style="text-align:center;margin-bottom:30px"><div style="color:#ea580c;font-weight:700;font-size:13px;letter-spacing:.15em">WHAT IT DOES</div><h2 style="font-size:30px;color:#0f172a;margin:8px 0 0;letter-spacing:-.02em">Everything an IF needs, in one place</h2></div>'+
     '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px">'+
     card("💰","Budgets that update themselves","Upload the FMS spending report — spreadsheet or PDF — and every service code, monthly amount, and pending approval syncs automatically. See months remaining and safe-to-spend per month.")+
     card("🎯","Goals with justifications","Turn PCP goals into budget requests: suggested service codes, what to ask for, and certification-ready justification language, with printable reports for the regional center.")+
     card("📋","Compliance &amp; documents","Spending plan checks against WIC 4685.8, a required-documents checklist with reminders, fillable forms, and one-click client update emails and PDFs.")+
     '</div>'+
-    '<div style="text-align:center;margin:60px 0 26px"><div style="color:#2563eb;font-weight:700;font-size:13px;letter-spacing:.15em">SIMPLE BY DESIGN</div><h2 style="font-size:30px;color:#0f172a;margin:8px 0 0;letter-spacing:-.02em">Your monthly routine, in three steps</h2></div>'+
+    '<div style="text-align:center;margin:60px 0 26px"><div style="color:#ea580c;font-weight:700;font-size:13px;letter-spacing:.15em">SIMPLE BY DESIGN</div><h2 style="font-size:30px;color:#0f172a;margin:8px 0 0;letter-spacing:-.02em">Your monthly routine, in three steps</h2></div>'+
     '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:26px">'+
     step("01","Add your client","Regional center, plan year, budget, and contacts — the whole workspace organizes around them.")+
     step("02","Import the FMS report","Drop in the weekly spreadsheet or Spending Summary PDF. Nothing double-counts, ever.")+
