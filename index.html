@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Independent Facilitator — SDP Workspace</title>
+<title>Horizons of Hope — SDP Workspace</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 :root{
@@ -110,8 +110,8 @@ details>div{padding:4px 16px 14px}
 <body>
 <header>
   <div>
-    <h1>Independent Facilitator — SDP Workspace</h1>
-    <div class="sub">California Self-Determination Program · client process &amp; budget management</div>
+    <h1>Horizons of Hope — SDP Workspace</h1>
+    <div class="sub">Independent Facilitator workspace · California Self-Determination Program</div>
   </div>
   <div class="hdr-btns">
     <button id="bkBtn" onclick="backupDir?writeBackup():reconnectBackup()">📁 Set up auto-backup</button>
@@ -1097,7 +1097,7 @@ function formStore(c,fid){ if(!c.forms)c.forms={}; if(!c.forms[fid])c.forms[fid]
 function fval(c,fid,f){ const s=formStore(c,fid); if(s[f.k]!==undefined) return s[f.k]; return f.pre?(f.pre(c)||""):""; }
 function renderForms(){
   const el=document.getElementById("view-forms");
-  let html=`<h2>Forms</h2><p class="hint">Fill forms right here — they prefill from the client's record, save automatically (and into auto-backup), and print cleanly for signatures. Word versions: <a href="IF-Services-Agreement.docx">agreement</a> · <a href="Pre-Enrollment-Proposal-and-Invoice.docx">proposal/invoice</a> · <a href="Monthly-Budget-Update-Letter.docx">update letter</a> · <a href="New-Client-Intake-Checklist.docx">intake</a> · <a href="Person-Centered-Plan-Template.docx">PCP</a> · <a href="IF-Hours-Budget-Calculator.xlsx">hours calculator</a> (keep these files in the same folder as the app).</p>${pickerHtml("forms")}`;
+  let html=`<h2>Forms</h2><p class="hint">Fill forms right here — they prefill from the client's record, save automatically (and into auto-backup), and print cleanly for signatures. Editable templates — download, then upload to Google Drive and they open in Google Docs/Sheets: <a href="IF-Services-Agreement.docx">agreement</a> · <a href="Pre-Enrollment-Proposal-and-Invoice.docx">proposal/invoice</a> · <a href="Monthly-Budget-Update-Letter.docx">update letter</a> · <a href="New-Client-Intake-Checklist.docx">intake</a> · <a href="Person-Centered-Plan-Template.docx">PCP</a> · <a href="IF-Hours-Budget-Calculator.xlsx">hours calculator</a> (on the website these download directly; locally keep them next to the app file).</p>${pickerHtml("forms")}`;
   const c=getClient(picked.forms);
   if(c){
     html+=rcFormsCard(c);
@@ -1297,70 +1297,93 @@ const IPP_KEYS = {
  action:     ["responsible","by when","timeline","follow up","next steps","review date","target date"]
 };
 const IPP_CACHE = {};
+function pcpSources(c){
+  const out=[];
+  if(c.pcp._ipptext) out.push({text:c.pcp._ipptext,src:"IPP"});
+  if(c.pcp._notestext) out.push({text:c.pcp._notestext,src:"Notes"});
+  return out;
+}
 function ippExcerpts(c){
-  if(!c.pcp._ipptext) return {};
-  if(IPP_CACHE[c.id] && IPP_CACHE[c.id].src===c.pcp._ipptext) return IPP_CACHE[c.id].map;
-  const paras = c.pcp._ipptext.replace(/\r/g,"").split(/\n\s*\n|(?<=[.!?])\s{2,}|\n(?=[A-Z0-9•\-])/)
-    .map(x=>x.replace(/\s+/g," ").trim()).filter(x=>x.length>40 && x.length<600);
+  const sources=pcpSources(c);
+  if(!sources.length) return {};
+  const key=sources.map(s=>s.text.length+s.src).join("|");
+  if(IPP_CACHE[c.id] && IPP_CACHE[c.id].key===key) return IPP_CACHE[c.id].map;
+  const paras=[];
+  sources.forEach(s=>{
+    s.text.replace(/\r/g,"").split(/\n\s*\n|(?<=[.!?])\s{2,}|\n(?=[A-Z0-9•\-])/)
+      .map(x=>x.replace(/\s+/g," ").trim()).filter(x=>x.length>40 && x.length<600)
+      .forEach(p=>paras.push({p,src:s.src}));
+  });
   const map={};
   Object.keys(IPP_KEYS).forEach(k=>{
     const scored=[];
-    paras.forEach(p=>{
-      const lc=p.toLowerCase();
+    paras.forEach(x=>{
+      const lc=x.p.toLowerCase();
       const score=IPP_KEYS[k].reduce((s,kw)=>s+(lc.includes(kw)?1:0),0);
-      if(score>0) scored.push({p,score});
+      if(score>0) scored.push({...x,score});
     });
     scored.sort((a,b)=>b.score-a.score);
-    map[k]=scored.slice(0,5).map(x=>x.p);
+    map[k]=scored.slice(0,6);
   });
-  IPP_CACHE[c.id]={src:c.pcp._ipptext,map};
+  IPP_CACHE[c.id]={key,map};
   return map;
 }
+function srcRow(c,kind,label,icon){
+  const t=kind==="ipp"?c.pcp._ipptext:c.pcp._notestext;
+  const nm=kind==="ipp"?c.pcp._ippname:c.pcp._notesname;
+  const dt=kind==="ipp"?c.pcp._ippdate:c.pcp._notesdate;
+  if(t) return `<div class="alert green" style="margin-bottom:8px">${icon} <strong>${label} loaded:</strong> ${esc(nm||"text")} (${Math.round(t.length/1000)}k chars, ${esc(dt||"")}) <button class="btn small secondary" onclick="clearIpp('${c.id}','${kind}')">Remove</button></div>`;
+  return `<div style="border:1px dashed var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px">
+  <strong style="font-size:13px">${icon} ${label}</strong>
+  <div class="row"><div><label>Upload (PDF or .txt)</label><input type="file" accept=".pdf,.txt" onchange="ippFile('${c.id}',this,'${kind}')"></div></div>
+  <label>…or paste text${kind==="notes"?" (from Apple Notes: select all → copy → paste here)":""}</label>
+  <textarea id="${kind}_paste" placeholder="${kind==="ipp"?"paste the IPP report text":"paste your PCP meeting notes"}"></textarea>
+  <button class="btn small" onclick="ippPasteSave('${c.id}','${kind}')">Use pasted text</button></div>`;
+}
 function ippPanel(c){
-  const has=!!c.pcp._ipptext;
-  let h=`<div class="card" style="background:var(--blue-light)"><h3 class="mt0">📄 IPP report — feed it into this PCP</h3>`;
-  if(has){
-    h+=`<p class="muted">Loaded: <strong>${esc(c.pcp._ippname||"IPP text")}</strong> (${Math.round(c.pcp._ipptext.length/1000)}k characters, added ${esc(c.pcp._ippdate||"")}). Matching passages appear under each section below — click <em>Insert</em> to pull them in, then edit into person-centered language.</p>
-    <button class="btn small secondary" onclick="clearIpp('${c.id}')">Remove IPP text</button>
-    <div class="alert blue" style="margin-top:10px">💡 <strong>Want a deeper analysis?</strong> The matching below is keyword-based. For real understanding — themes, gaps, unmet needs, spending plan ideas — upload the IPP to <strong>Claude</strong> and ask for a PCP-prep summary, then paste it here. <button class="btn small secondary" onclick="copyClaudePrompt('${c.id}')">Copy a ready-made prompt for Claude</button></div>`;
-  } else {
-    h+=`<p class="muted">Upload the IPP as a <strong>PDF or .txt</strong> (for Word files: use File → Save As → PDF, or copy-paste below). The app scans it and lines up relevant passages next to each PCP section. Scanned/image-only PDFs can't be read — paste the text instead.</p>
-    <div class="row"><div><label>Upload IPP (PDF or .txt)</label><input type="file" accept=".pdf,.txt" onchange="ippFile('${c.id}',this)"></div></div>
-    <label>…or paste IPP text</label><textarea id="ipp_paste" placeholder="paste the IPP report text here"></textarea>
-    <button class="btn small" onclick="ippPasteSave('${c.id}')">Use pasted text</button>
-    <div class="alert blue" style="margin-top:10px">💡 <strong>Tip:</strong> for the deepest read of an IPP, upload it to <strong>Claude</strong> (the assistant that built this app) and ask for a PCP-prep analysis — it understands the content, not just keywords. Then paste Claude's summary into the sections below. <button class="btn small secondary" onclick="copyClaudePrompt('${c.id}')">Copy a ready-made prompt for Claude</button></div>`;
-  }
-  return h+`</div>`;
+  let h=`<div class="card" style="background:var(--blue-light)"><h3 class="mt0">📄 Source documents — feed them into this PCP</h3>
+  <p class="muted">Add the IPP report and your PCP meeting notes. The builder scans both and lines up matching passages under each section below — click <em>Insert</em> to pull them in, then edit into person-centered language.</p>`;
+  h+=srcRow(c,"ipp","IPP report","📄");
+  h+=srcRow(c,"notes","PCP meeting notes","📝");
+  h+=`<div class="alert blue" style="margin-top:6px">💡 <strong>Deeper analysis:</strong> the matching here is keyword-based. For real understanding, take both documents to <strong>Claude</strong>: <button class="btn small secondary" onclick="copyClaudePrompt('${c.id}')">Copy PCP-prep prompt</button> <button class="btn small secondary" onclick="copyPcpDeckPrompt('${c.id}')">Copy presentation prompt</button> — attach the IPP + notes and paste.</div></div>`;
+  return h;
 }
 function ippHints(c,s){
   const map=ippExcerpts(c);
   const ex=map[s.k]||[];
   if(!ex.length) return "";
-  let h=`<details style="margin:-6px 0 10px;background:var(--blue-light)"><summary style="font-size:12.5px">📄 From the IPP — ${ex.length} matching passage${ex.length>1?"s":""}</summary><div>`;
-  ex.forEach((p,i)=>{
-    h+=`<p style="font-size:12.5px;margin:6px 0"><button class="btn small secondary" onclick="ippInsert('${c.id}','${s.k}',${i})">Insert ⤵</button> ${esc(p)}</p>`;
+  let h=`<details style="margin:-6px 0 10px;background:var(--blue-light)"><summary style="font-size:12.5px">💡 From your documents — ${ex.length} matching passage${ex.length>1?"s":""}</summary><div>`;
+  ex.forEach((x,i)=>{
+    h+=`<p style="font-size:12.5px;margin:6px 0"><button class="btn small secondary" onclick="ippInsert('${c.id}','${s.k}',${i})">Insert ⤵</button> <span class="badge ${x.src==="IPP"?"blue":"green"}">${x.src==="IPP"?"📄 IPP":"📝 Notes"}</span> ${esc(x.p)}</p>`;
   });
   return h+`</div></details>`;
 }
 function ippInsert(cid,k,i){
   const c=getClient(cid);
   const ex=(ippExcerpts(c)[k]||[])[i]; if(!ex) return;
-  c.pcp[k]=(c.pcp[k]?c.pcp[k]+"\n\n":"")+"[From IPP] "+ex;
+  c.pcp[k]=(c.pcp[k]?c.pcp[k]+"\n\n":"")+"[From "+ex.src+"] "+ex.p;
   save(); renderPCP();
 }
-function ippSetText(cid,text,name){
+function ippSetText(cid,text,name,kind){
   const c=getClient(cid);
   if(!text||text.trim().length<50){ alert("Couldn't find readable text — if it's a scanned PDF, paste the text instead."); return; }
-  c.pcp._ipptext=text.slice(0,400000); c.pcp._ippname=name; c.pcp._ippdate=today();
+  if(kind==="notes"){ c.pcp._notestext=text.slice(0,400000); c.pcp._notesname=name; c.pcp._notesdate=today(); }
+  else { c.pcp._ipptext=text.slice(0,400000); c.pcp._ippname=name; c.pcp._ippdate=today(); }
   delete IPP_CACHE[cid];
   save(); renderPCP();
 }
-function clearIpp(cid){ const c=getClient(cid); delete c.pcp._ipptext; delete c.pcp._ippname; delete c.pcp._ippdate; delete IPP_CACHE[cid]; save(); renderPCP(); }
-function ippPasteSave(cid){ ippSetText(cid, document.getElementById("ipp_paste").value, "pasted text"); }
-function ippFile(cid,input){
+function clearIpp(cid,kind){
+  const c=getClient(cid);
+  if(kind==="notes"){ delete c.pcp._notestext; delete c.pcp._notesname; delete c.pcp._notesdate; }
+  else { delete c.pcp._ipptext; delete c.pcp._ippname; delete c.pcp._ippdate; }
+  delete IPP_CACHE[cid]; save(); renderPCP();
+}
+function ippPasteSave(cid,kind){ ippSetText(cid, document.getElementById((kind||"ipp")+"_paste").value, kind==="notes"?"pasted notes":"pasted text", kind||"ipp"); }
+function ippFile(cid,input,kind){
   const f=input.files[0]; if(!f) return;
+  kind=kind||"ipp";
   if(/\.txt$/i.test(f.name)){
-    const r=new FileReader(); r.onload=()=>ippSetText(cid,r.result,f.name); r.readAsText(f); return;
+    const r=new FileReader(); r.onload=()=>ippSetText(cid,r.result,f.name,kind); r.readAsText(f); return;
   }
   loadPdfJs().then(()=>{
     const r=new FileReader();
@@ -1372,11 +1395,11 @@ function ippFile(cid,input){
           const pg=await pdf.getPage(i); const tc=await pg.getTextContent();
           text+=tc.items.map(x=>x.str).join(" ")+"\n\n";
         }
-        ippSetText(cid,text,f.name);
+        ippSetText(cid,text,f.name,kind);
       }catch(e){ alert("Could not read that PDF ("+e.message+"). Paste the text instead."); }
     };
     r.readAsArrayBuffer(f);
-  }).catch(()=>alert("PDF reading needs an internet connection the first time (to load the PDF library). Or paste the IPP text instead."));
+  }).catch(()=>alert("PDF reading needs an internet connection the first time (to load the PDF library). Or paste the text instead."));
 }
 
 function copyClaudePrompt(cid){
@@ -1514,7 +1537,7 @@ async function openRcForm(rcid,i){
 let IMPORT=null; /* {cid, name, headers, rows} */
 function fmsImportCard(c){
   let h=`<div class="card"><h3 class="mt0">📊 Import FMS spreadsheet</h3>
-  <p class="muted">Upload the FMS report and the app updates spending automatically — no portal login needed. Spreadsheets (.xlsx/.csv) import as transactions; a <strong>Spending Summary PDF</strong> (like CFMS sends) syncs authorized amounts, monthly spending per service code, and pending approvals. Re-uploading a newer report is safe — nothing double-counts.</p>`;
+  <p class="muted">Upload the FMS report and the app updates spending automatically — no portal login needed. Spreadsheets import as transactions — Excel or Google Sheets (in Sheets: File → Download → .csv); a <strong>Spending Summary PDF</strong> (like CFMS sends) syncs authorized amounts, monthly spending per service code, and pending approvals. Re-uploading a newer report is safe — nothing double-counts.</p>`;
   if(PDFIMP&&PDFIMP.cid===c.id){ return h+pdfSummaryPreview(c)+`</div>`; }
   if(!(IMPORT&&IMPORT.cid===c.id)){
     h+=`<div class="row"><div><label>FMS report file (.xlsx, .csv, or Spending Summary PDF)</label><input type="file" accept=".xlsx,.xls,.csv,.pdf" onchange="fmsSheet('${c.id}',this)"></div></div>${c.lastSummary?`<p class="muted">Last Spending Summary applied: ${esc(c.lastSummary.file)} (as of ${esc(c.lastSummary.asOf)})</p>`:""}`;
@@ -1833,31 +1856,64 @@ async function reportPdf(cid){
 }
 </script>
 <script>
-/* ================= ACCESS GATE (invite-only) ================= */
-const ACCESS_CODES=["SDP-LEONA-ADMIN","SDP-GUEST-1","SDP-GUEST-2","SDP-GUEST-3"];
+/* ================= LANDING PAGE + PERSONALIZED ACCESS ================= */
+const ACCESS_CODES=["HOH-LEONA-2026","HOH-GUEST-A7","HOH-GUEST-B4","HOH-GUEST-C9"];
+function gateApproved(){
+  try{
+    const c=localStorage.getItem("ifsdp_code");
+    return !!c && ACCESS_CODES.some(x=>x.toUpperCase()===c.trim().toUpperCase());
+  }catch(e){ return false; }
+}
 function gateTry(){
-  const v=document.getElementById("gateCode").value.trim().toUpperCase();
-  if(ACCESS_CODES.map(c=>c.toUpperCase()).includes(v)){
-    try{ localStorage.setItem("ifsdp_access","ok"); }catch(e){}
-    const g=document.getElementById("accessGate"); if(g) g.style.display="none";
+  const v=document.getElementById("gateCode").value.trim();
+  if(ACCESS_CODES.some(x=>x.toUpperCase()===v.toUpperCase())){
+    try{ localStorage.setItem("ifsdp_code",v); localStorage.removeItem("ifsdp_access"); }catch(e){}
+    const g=document.getElementById("landing"); if(g) g.style.display="none";
   } else {
     document.getElementById("gateMsg").textContent="That code isn't valid — please check with your facilitator.";
   }
 }
+function landingHtml(){
+  const card=(icon,t,d)=>'<div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:24px;box-shadow:0 1px 3px rgba(15,23,42,.07)"><div style="font-size:30px">'+icon+'</div><h3 style="margin:10px 0 6px;color:#0f172a;font-size:17px">'+t+'</h3><p style="color:#64748b;font-size:14px;line-height:1.55;margin:0">'+d+'</p></div>';
+  const step=(n,t,d)=>'<div><div style="font-size:13px;font-weight:800;color:#2563eb;letter-spacing:.1em">'+n+'</div><h3 style="margin:6px 0;color:#0f172a;font-size:17px">'+t+'</h3><p style="color:#64748b;font-size:14px;line-height:1.55;margin:0">'+d+'</p></div>';
+  return '<div style="font-family:Inter,-apple-system,sans-serif">'+
+  '<div style="background:linear-gradient(135deg,#1e3a8a,#2563eb 55%,#0ea5e9 120%);color:#fff;padding:64px 24px 72px;text-align:center">'+
+    '<div style="font-size:13px;font-weight:700;letter-spacing:.22em;opacity:.85">HORIZONS OF HOPE</div>'+
+    '<h1 style="font-size:clamp(30px,5vw,52px);font-weight:800;letter-spacing:-.03em;margin:14px auto 0;max-width:760px;line-height:1.12">Every client, every dollar,<br>every goal.</h1>'+
+    '<p style="font-size:17px;opacity:.92;max-width:640px;margin:18px auto 0;line-height:1.6">A complete workspace for Independent Facilitators in California&#39;s Self-Determination Program — clients, budgets, spending plans, goals, compliance, and documents in one place.</p>'+
+    '<div style="background:#fff;border-radius:16px;padding:22px;max-width:400px;margin:30px auto 0;box-shadow:0 16px 50px rgba(0,0,0,.3)">'+
+      '<p style="color:#0f172a;font-weight:700;margin:0 0 10px">🗝️ Invite-only access</p>'+
+      '<input id="gateCode" placeholder="Enter your access code" style="width:100%;box-sizing:border-box;padding:12px;border:1px solid #e2e8f0;border-radius:10px;font-size:15px;text-align:center;letter-spacing:.05em" onkeydown="if(event.key===&quot;Enter&quot;)gateTry()">'+
+      '<button onclick="gateTry()" style="width:100%;margin-top:10px;padding:12px;border:none;border-radius:10px;background:linear-gradient(120deg,#2563eb,#1d4ed8);color:#fff;font-size:15px;font-weight:700;cursor:pointer">Enter Workspace</button>'+
+      '<p id="gateMsg" style="color:#dc2626;font-size:13px;margin:8px 0 0;min-height:16px"></p>'+
+      '<p style="color:#94a3b8;font-size:12px;margin:6px 0 0">Ask your facilitator for a code</p>'+
+    '</div>'+
+    '<p style="font-size:13px;opacity:.75;margin-top:22px">Your data never leaves your browser · Works with Google Docs, Sheets &amp; Slides</p>'+
+  '</div>'+
+  '<div style="max-width:1020px;margin:0 auto;padding:56px 24px">'+
+    '<div style="text-align:center;margin-bottom:30px"><div style="color:#2563eb;font-weight:700;font-size:13px;letter-spacing:.15em">WHAT IT DOES</div><h2 style="font-size:30px;color:#0f172a;margin:8px 0 0;letter-spacing:-.02em">Everything an IF needs, in one place</h2></div>'+
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px">'+
+    card("💰","Budgets that update themselves","Upload the FMS spending report — spreadsheet or PDF — and every service code, monthly amount, and pending approval syncs automatically. See months remaining and safe-to-spend per month.")+
+    card("🎯","Goals with justifications","Turn PCP goals into budget requests: suggested service codes, what to ask for, and certification-ready justification language, with printable reports for the regional center.")+
+    card("📋","Compliance &amp; documents","Spending plan checks against WIC 4685.8, a required-documents checklist with reminders, fillable forms, and one-click client update emails and PDFs.")+
+    '</div>'+
+    '<div style="text-align:center;margin:60px 0 26px"><div style="color:#2563eb;font-weight:700;font-size:13px;letter-spacing:.15em">SIMPLE BY DESIGN</div><h2 style="font-size:30px;color:#0f172a;margin:8px 0 0;letter-spacing:-.02em">Your monthly routine, in three steps</h2></div>'+
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:26px">'+
+    step("01","Add your client","Regional center, plan year, budget, and contacts — the whole workspace organizes around them.")+
+    step("02","Import the FMS report","Drop in the weekly spreadsheet or Spending Summary PDF. Nothing double-counts, ever.")+
+    step("03","Send the update","Preview the budget report, save it as a PDF, and email the family — with alerts if spending is off pace.")+
+    '</div>'+
+  '</div>'+
+  '<div style="background:#0f172a;color:#94a3b8;text-align:center;padding:26px;font-size:13px">Built with care by <strong style="color:#e2e8f0">Horizons of Hope</strong> · All data stays in your browser — nothing is sent to a server</div>'+
+  '</div>';
+}
 (function(){
-  try{ if(localStorage.getItem("ifsdp_access")==="ok") return; }catch(e){ return; }
+  if(gateApproved()) return;
   const ov=document.createElement("div");
-  ov.id="accessGate";
-  ov.style.cssText="position:fixed;inset:0;background:linear-gradient(120deg,#1e3a8a,#2563eb 60%,#0ea5e9);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px";
-  ov.innerHTML='<div style="background:#fff;padding:36px 32px;border-radius:18px;max-width:420px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.35)">'+
-  '<div style="font-size:34px;margin-bottom:6px">🗝️</div>'+
-  '<h2 style="margin-bottom:6px;color:#1e40af">SDP Workspace</h2>'+
-  '<p style="color:#64748b;font-size:14px;margin-bottom:16px">This tool is invite-only. Enter the access code you received from your Independent Facilitator.</p>'+
-  '<input id="gateCode" placeholder="Access code" style="width:100%;padding:11px;border:1px solid #e2e8f0;border-radius:9px;font-size:15px;text-align:center;letter-spacing:.06em" onkeydown="if(event.key===\'Enter\')gateTry()">'+
-  '<button class="btn" style="width:100%;margin-top:12px" onclick="gateTry()">Enter</button>'+
-  '<p id="gateMsg" style="color:#dc2626;font-size:13px;margin-top:10px;min-height:18px"></p></div>';
+  ov.id="landing";
+  ov.style.cssText="position:fixed;inset:0;background:#fff;z-index:2000;overflow:auto";
+  ov.innerHTML=landingHtml();
   document.body.appendChild(ov);
-  const i=document.getElementById("gateCode"); if(i&&i.focus) i.focus();
 })();
 </script>
 <script>renderAll();</script>
