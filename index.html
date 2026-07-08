@@ -7,7 +7,7 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 :root{
-  --blue:#f97316; --blue-dark:#c2410c; --blue-light:#fff4ec;
+  --blue:#f97316; --blue-dark:#7c2d12; --blue-light:#fff4ec;
   --green:#15803d; --green-light:#ecfdf3;
   --amber:#b45309; --amber-light:#fef7e7;
   --red:#dc2626; --red-light:#fef1f1;
@@ -1874,15 +1874,15 @@ function gateTry(){
   }
 }
 function landingHtml(){
-  const card=(icon,t,d)=>'<div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:24px;box-shadow:0 1px 3px rgba(15,23,42,.07)"><div style="font-size:30px">'+icon+'</div><h3 style="margin:10px 0 6px;color:#0f172a;font-size:17px">'+t+'</h3><p style="color:#64748b;font-size:14px;line-height:1.55;margin:0">'+d+'</p></div>';
-  const step=(n,t,d)=>'<div><div style="font-size:13px;font-weight:800;color:#ea580c;letter-spacing:.1em">'+n+'</div><h3 style="margin:6px 0;color:#0f172a;font-size:17px">'+t+'</h3><p style="color:#64748b;font-size:14px;line-height:1.55;margin:0">'+d+'</p></div>';
+  const card=(icon,t,d)=>'<div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:24px;box-shadow:0 1px 3px rgba(15,23,42,.07)"><div style="font-size:30px">'+icon+'</div><h3 style="margin:10px 0 6px;color:#7c2d12;font-size:17px">'+t+'</h3><p style="color:#64748b;font-size:14px;line-height:1.55;margin:0">'+d+'</p></div>';
+  const step=(n,t,d)=>'<div><div style="font-size:13px;font-weight:800;color:#7c2d12;letter-spacing:.1em">'+n+'</div><h3 style="margin:6px 0;color:#7c2d12;font-size:17px">'+t+'</h3><p style="color:#64748b;font-size:14px;line-height:1.55;margin:0">'+d+'</p></div>';
   return '<div style="font-family:Inter,-apple-system,sans-serif">'+
   '<div style="background:linear-gradient(135deg,#9a3412,#f97316 58%,#0ea5e9 135%);color:#fff;padding:64px 24px 72px;text-align:center">'+
     '<div style="font-size:13px;font-weight:700;letter-spacing:.22em;opacity:.85">HORIZONS OF HOPE</div>'+
     '<h1 style="font-size:clamp(30px,5vw,52px);font-weight:800;letter-spacing:-.03em;margin:14px auto 0;max-width:760px;line-height:1.12">Every client, every dollar,<br>every goal.</h1>'+
     '<p style="font-size:17px;opacity:.92;max-width:640px;margin:18px auto 0;line-height:1.6">A complete workspace for Independent Facilitators in California&#39;s Self-Determination Program — clients, budgets, spending plans, goals, compliance, and documents in one place.</p>'+
     '<div style="background:#fff;border-radius:16px;padding:22px;max-width:400px;margin:30px auto 0;box-shadow:0 16px 50px rgba(0,0,0,.3)">'+
-      '<p style="color:#0f172a;font-weight:700;margin:0 0 10px">🗝️ Invite-only access</p>'+
+      '<p style="color:#7c2d12;font-weight:700;margin:0 0 10px">🗝️ Invite-only access</p>'+
       '<input id="gateCode" placeholder="Enter your access code" style="width:100%;box-sizing:border-box;padding:12px;border:1px solid #e2e8f0;border-radius:10px;font-size:15px;text-align:center;letter-spacing:.05em" onkeydown="if(event.key===&quot;Enter&quot;)gateTry()">'+
       '<button onclick="gateTry()" style="width:100%;margin-top:10px;padding:12px;border:none;border-radius:10px;background:linear-gradient(120deg,#f97316,#ea580c);color:#fff;font-size:15px;font-weight:700;cursor:pointer">Enter Workspace</button>'+
       '<p id="gateMsg" style="color:#dc2626;font-size:13px;margin:8px 0 0;min-height:16px"></p>'+
@@ -1891,13 +1891,13 @@ function landingHtml(){
     '<p style="font-size:13px;opacity:.75;margin-top:22px">Your data never leaves your browser · Works with Google Docs, Sheets &amp; Slides</p>'+
   '</div>'+
   '<div style="max-width:1020px;margin:0 auto;padding:56px 24px">'+
-    '<div style="text-align:center;margin-bottom:30px"><div style="color:#ea580c;font-weight:700;font-size:13px;letter-spacing:.15em">WHAT IT DOES</div><h2 style="font-size:30px;color:#0f172a;margin:8px 0 0;letter-spacing:-.02em">Everything an IF needs, in one place</h2></div>'+
+    '<div style="text-align:center;margin-bottom:30px"><div style="color:#7c2d12;font-weight:700;font-size:13px;letter-spacing:.15em">WHAT IT DOES</div><h2 style="font-size:30px;color:#7c2d12;margin:8px 0 0;letter-spacing:-.02em">Everything an IF needs, in one place</h2></div>'+
     '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px">'+
     card("💰","Budgets that update themselves","Upload the FMS spending report — spreadsheet or PDF — and every service code, monthly amount, and pending approval syncs automatically. See months remaining and safe-to-spend per month.")+
     card("🎯","Goals with justifications","Turn PCP goals into budget requests: suggested service codes, what to ask for, and certification-ready justification language, with printable reports for the regional center.")+
     card("📋","Compliance &amp; documents","Spending plan checks against WIC 4685.8, a required-documents checklist with reminders, fillable forms, and one-click client update emails and PDFs.")+
     '</div>'+
-    '<div style="text-align:center;margin:60px 0 26px"><div style="color:#ea580c;font-weight:700;font-size:13px;letter-spacing:.15em">SIMPLE BY DESIGN</div><h2 style="font-size:30px;color:#0f172a;margin:8px 0 0;letter-spacing:-.02em">Your monthly routine, in three steps</h2></div>'+
+    '<div style="text-align:center;margin:60px 0 26px"><div style="color:#7c2d12;font-weight:700;font-size:13px;letter-spacing:.15em">SIMPLE BY DESIGN</div><h2 style="font-size:30px;color:#7c2d12;margin:8px 0 0;letter-spacing:-.02em">Your monthly routine, in three steps</h2></div>'+
     '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:26px">'+
     step("01","Add your client","Regional center, plan year, budget, and contacts — the whole workspace organizes around them.")+
     step("02","Import the FMS report","Drop in the weekly spreadsheet or Spending Summary PDF. Nothing double-counts, ever.")+
