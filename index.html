@@ -1856,23 +1856,74 @@ async function reportPdf(cid){
 }
 </script>
 <script>
-/* ================= LANDING PAGE + PERSONALIZED ACCESS ================= */
+/* ================= LANDING PAGE + ACCESS (email approval w/ code fallback) ================= */
 const ACCESS_CODES=["HOH-LEONA-2026","HOH-GUEST-A7","HOH-GUEST-B4","HOH-GUEST-C9"];
-function gateApproved(){
-  try{
-    const c=localStorage.getItem("ifsdp_code");
-    return !!c && ACCESS_CODES.some(x=>x.toUpperCase()===c.trim().toUpperCase());
-  }catch(e){ return false; }
+let BACKEND=false;
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+function lsDel(k){ try{ localStorage.removeItem(k); }catch(e){} }
+function deviceId(){ let d=lsGet("ifsdp_dev"); if(!d){ d=Math.random().toString(36).slice(2)+Date.now().toString(36); lsSet("ifsdp_dev",d); } return d; }
+function legacyApproved(){ const c=lsGet("ifsdp_code"); return !!c && ACCESS_CODES.some(x=>x.toUpperCase()===c.trim().toUpperCase()); }
+function showLanding(){
+  let ov=document.getElementById("landing");
+  if(!ov){ ov=document.createElement("div"); ov.id="landing"; ov.style.cssText="position:fixed;inset:0;background:#fff;z-index:2000;overflow:auto"; document.body.appendChild(ov); }
+  ov.innerHTML=landingHtml(); ov.style.display="block";
 }
+function hideLanding(){ const ov=document.getElementById("landing"); if(ov) ov.style.display="none"; }
 function gateTry(){
   const v=document.getElementById("gateCode").value.trim();
-  if(ACCESS_CODES.some(x=>x.toUpperCase()===v.toUpperCase())){
-    try{ localStorage.setItem("ifsdp_code",v); localStorage.removeItem("ifsdp_access"); }catch(e){}
-    const g=document.getElementById("landing"); if(g) g.style.display="none";
-  } else {
-    document.getElementById("gateMsg").textContent="That code isn't valid — please check with your facilitator.";
-  }
+  if(ACCESS_CODES.some(x=>x.toUpperCase()===v.toUpperCase())){ lsSet("ifsdp_code",v); hideLanding(); }
+  else document.getElementById("gateMsg").textContent="That code isn't valid — please check with your facilitator.";
 }
+async function requestAccess(){
+  const nm=document.getElementById("reqName").value.trim();
+  const em=document.getElementById("reqEmail").value.trim();
+  const msg=document.getElementById("gateMsg");
+  if(!em||em.indexOf("@")<1){ msg.style.color="#dc2626"; msg.textContent="Please enter your email."; return; }
+  msg.style.color="#64748b"; msg.textContent="Sending…";
+  try{
+    const r=await fetch("/api/request-access",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:nm,email:em})}).then(x=>x.json());
+    msg.style.color=r.ok?"#15803d":"#dc2626";
+    msg.textContent=r.ok?(r.message||"Request sent! You'll receive your personal access link once approved."):(r.error||"Something went wrong — try again.");
+  }catch(e){ msg.style.color="#dc2626"; msg.textContent="Couldn't reach the server — try again in a moment."; }
+}
+function accessCardHtml(){
+  if(BACKEND) return '<p style="color:#7c2d12;font-weight:700;margin:0 0 10px">🗝️ Request access</p>'+
+    '<input id="reqName" placeholder="Your name" style="width:100%;box-sizing:border-box;padding:11px;border:1px solid #e2e8f0;border-radius:10px;font-size:15px;margin-bottom:8px">'+
+    '<input id="reqEmail" type="email" placeholder="Your email" style="width:100%;box-sizing:border-box;padding:11px;border:1px solid #e2e8f0;border-radius:10px;font-size:15px" onkeydown="if(event.key===&quot;Enter&quot;)requestAccess()">'+
+    '<button onclick="requestAccess()" style="width:100%;margin-top:10px;padding:12px;border:none;border-radius:10px;background:linear-gradient(120deg,#f97316,#ea580c);color:#fff;font-size:15px;font-weight:700;cursor:pointer">Request Access</button>'+
+    '<p id="gateMsg" style="font-size:13px;margin:8px 0 0;min-height:16px;color:#64748b"></p>'+
+    '<p style="color:#94a3b8;font-size:12px;margin:6px 0 0">Your facilitator approves each request. Already approved? Open the access link you were emailed — it signs this device in.</p>';
+  return '<p style="color:#7c2d12;font-weight:700;margin:0 0 10px">🗝️ Invite-only access</p>'+
+    '<input id="gateCode" placeholder="Enter your access code" style="width:100%;box-sizing:border-box;padding:12px;border:1px solid #e2e8f0;border-radius:10px;font-size:15px;text-align:center;letter-spacing:.05em" onkeydown="if(event.key===&quot;Enter&quot;)gateTry()">'+
+    '<button onclick="gateTry()" style="width:100%;margin-top:10px;padding:12px;border:none;border-radius:10px;background:linear-gradient(120deg,#f97316,#ea580c);color:#fff;font-size:15px;font-weight:700;cursor:pointer">Enter Workspace</button>'+
+    '<p id="gateMsg" style="color:#dc2626;font-size:13px;margin:8px 0 0;min-height:16px"></p>'+
+    '<p style="color:#94a3b8;font-size:12px;margin:6px 0 0">Ask your facilitator for a code</p>';
+}
+async function initGate(){
+  try{
+    const url=new URL(location.href);
+    const t=url.searchParams.get("token");
+    if(t){ lsSet("ifsdp_token",t.replace(/[^a-zA-Z0-9]/g,"")); url.searchParams.delete("token"); history.replaceState(null,"",url.pathname+url.search); }
+  }catch(e){}
+  try{ const h=await fetch("/api/health").then(r=>r.json()); BACKEND=!!h.configured; }catch(e){ BACKEND=false; }
+  const tok=lsGet("ifsdp_token");
+  if(BACKEND&&tok){
+    hideLanding();
+    try{
+      const v=await fetch("/api/verify",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:tok,device:deviceId()})}).then(r=>r.json());
+      if(v.ok){ lsSet("ifsdp_okat",String(Date.now())); return; }
+      lsDel("ifsdp_token"); showLanding(); return;
+    }catch(e){
+      if(Date.now()-(+lsGet("ifsdp_okat")||0) < 7*86400000) return; /* offline grace */
+      showLanding(); return;
+    }
+  }
+  if(legacyApproved()) return; /* codes keep working during transition */
+  showLanding();
+}
+initGate();
+
 function landingHtml(){
   const card=(icon,t,d)=>'<div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:24px;box-shadow:0 1px 3px rgba(15,23,42,.07)"><div style="font-size:30px">'+icon+'</div><h3 style="margin:10px 0 6px;color:#7c2d12;font-size:17px">'+t+'</h3><p style="color:#64748b;font-size:14px;line-height:1.55;margin:0">'+d+'</p></div>';
   const step=(n,t,d)=>'<div><div style="font-size:13px;font-weight:800;color:#7c2d12;letter-spacing:.1em">'+n+'</div><h3 style="margin:6px 0;color:#7c2d12;font-size:17px">'+t+'</h3><p style="color:#64748b;font-size:14px;line-height:1.55;margin:0">'+d+'</p></div>';
@@ -1882,11 +1933,7 @@ function landingHtml(){
     '<h1 style="font-size:clamp(30px,5vw,52px);font-weight:800;letter-spacing:-.03em;margin:14px auto 0;max-width:760px;line-height:1.12">Every client, every dollar,<br>every goal.</h1>'+
     '<p style="font-size:17px;opacity:.92;max-width:640px;margin:18px auto 0;line-height:1.6">A complete workspace for Independent Facilitators in California&#39;s Self-Determination Program — clients, budgets, spending plans, goals, compliance, and documents in one place.</p>'+
     '<div style="background:#fff;border-radius:16px;padding:22px;max-width:400px;margin:30px auto 0;box-shadow:0 16px 50px rgba(0,0,0,.3)">'+
-      '<p style="color:#7c2d12;font-weight:700;margin:0 0 10px">🗝️ Invite-only access</p>'+
-      '<input id="gateCode" placeholder="Enter your access code" style="width:100%;box-sizing:border-box;padding:12px;border:1px solid #e2e8f0;border-radius:10px;font-size:15px;text-align:center;letter-spacing:.05em" onkeydown="if(event.key===&quot;Enter&quot;)gateTry()">'+
-      '<button onclick="gateTry()" style="width:100%;margin-top:10px;padding:12px;border:none;border-radius:10px;background:linear-gradient(120deg,#f97316,#ea580c);color:#fff;font-size:15px;font-weight:700;cursor:pointer">Enter Workspace</button>'+
-      '<p id="gateMsg" style="color:#dc2626;font-size:13px;margin:8px 0 0;min-height:16px"></p>'+
-      '<p style="color:#94a3b8;font-size:12px;margin:6px 0 0">Ask your facilitator for a code</p>'+
+      accessCardHtml()+
     '</div>'+
     '<p style="font-size:13px;opacity:.75;margin-top:22px">Your data never leaves your browser · Works with Google Docs, Sheets &amp; Slides</p>'+
   '</div>'+
@@ -1907,14 +1954,6 @@ function landingHtml(){
   '<div style="background:#0f172a;color:#94a3b8;text-align:center;padding:26px;font-size:13px">Built with care by <strong style="color:#e2e8f0">Horizons of Hope</strong> · All data stays in your browser — nothing is sent to a server</div>'+
   '</div>';
 }
-(function(){
-  if(gateApproved()) return;
-  const ov=document.createElement("div");
-  ov.id="landing";
-  ov.style.cssText="position:fixed;inset:0;background:#fff;z-index:2000;overflow:auto";
-  ov.innerHTML=landingHtml();
-  document.body.appendChild(ov);
-})();
 </script>
 <script>renderAll();</script>
 </body>
