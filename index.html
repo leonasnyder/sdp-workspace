@@ -761,8 +761,7 @@ function renderResources(){
   <p class="muted">Everything you enter lives only in this browser (localStorage) — nothing is sent anywhere. Turn on <strong>📁 auto-backup</strong> (header) to save automatically to a folder you designate — e.g. Google Drive for Desktop &gt; IF Clients 2026 — with one subfolder per client (data file + readable budget summary). Works in Chrome/Edge; after reopening the app, one click reconnects the folder. <strong>Backup data / Restore</strong> still work manually anywhere. Client information is sensitive: store backups securely.</p></div>`;
 }
 
-/* ================= INIT ================= */
-renderAll();
+/* ================= INIT: moved to final script block ================= */
 </script>
 <script>
 /* ================= GOALS, ASKS & JUSTIFICATION ================= */
@@ -1833,5 +1832,34 @@ async function reportPdf(cid){
   } else if(!c.email) alert("PDF "+where+".");
 }
 </script>
+<script>
+/* ================= ACCESS GATE (invite-only) ================= */
+const ACCESS_CODES=["SDP-LEONA-ADMIN","SDP-GUEST-1","SDP-GUEST-2","SDP-GUEST-3"];
+function gateTry(){
+  const v=document.getElementById("gateCode").value.trim().toUpperCase();
+  if(ACCESS_CODES.map(c=>c.toUpperCase()).includes(v)){
+    try{ localStorage.setItem("ifsdp_access","ok"); }catch(e){}
+    const g=document.getElementById("accessGate"); if(g) g.style.display="none";
+  } else {
+    document.getElementById("gateMsg").textContent="That code isn't valid — please check with your facilitator.";
+  }
+}
+(function(){
+  try{ if(localStorage.getItem("ifsdp_access")==="ok") return; }catch(e){ return; }
+  const ov=document.createElement("div");
+  ov.id="accessGate";
+  ov.style.cssText="position:fixed;inset:0;background:linear-gradient(120deg,#1e3a8a,#2563eb 60%,#0ea5e9);z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px";
+  ov.innerHTML='<div style="background:#fff;padding:36px 32px;border-radius:18px;max-width:420px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.35)">'+
+  '<div style="font-size:34px;margin-bottom:6px">🗝️</div>'+
+  '<h2 style="margin-bottom:6px;color:#1e40af">SDP Workspace</h2>'+
+  '<p style="color:#64748b;font-size:14px;margin-bottom:16px">This tool is invite-only. Enter the access code you received from your Independent Facilitator.</p>'+
+  '<input id="gateCode" placeholder="Access code" style="width:100%;padding:11px;border:1px solid #e2e8f0;border-radius:9px;font-size:15px;text-align:center;letter-spacing:.06em" onkeydown="if(event.key===\'Enter\')gateTry()">'+
+  '<button class="btn" style="width:100%;margin-top:12px" onclick="gateTry()">Enter</button>'+
+  '<p id="gateMsg" style="color:#dc2626;font-size:13px;margin-top:10px;min-height:18px"></p></div>';
+  document.body.appendChild(ov);
+  const i=document.getElementById("gateCode"); if(i&&i.focus) i.focus();
+})();
+</script>
+<script>renderAll();</script>
 </body>
 </html>
