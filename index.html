@@ -1,0 +1,1837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Independent Facilitator — SDP Workspace</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+:root{
+  --blue:#2563eb; --blue-dark:#1e40af; --blue-light:#eff4ff;
+  --green:#15803d; --green-light:#ecfdf3;
+  --amber:#b45309; --amber-light:#fef7e7;
+  --red:#dc2626; --red-light:#fef1f1;
+  --ink:#0f172a; --muted:#64748b; --line:#e2e8f0;
+  --bg:#f1f5f9; --card:#ffffff; --radius:14px;
+  --shadow:0 1px 3px rgba(15,23,42,.07),0 1px 2px rgba(15,23,42,.05);
+  --shadow-lg:0 8px 24px rgba(15,23,42,.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:linear-gradient(180deg,#eef2f7 0%,var(--bg) 240px);color:var(--ink);font-size:15px;line-height:1.5}
+header{background:linear-gradient(120deg,#1e3a8a 0%,#2563eb 55%,#0ea5e9 130%);color:#fff;padding:18px 26px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;box-shadow:0 2px 12px rgba(30,58,138,.25)}
+header h1{font-size:20px;font-weight:700;letter-spacing:-.02em}
+header .sub{font-size:12.5px;opacity:.85}
+.hdr-btns{display:flex;gap:8px}
+.hdr-btns button{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4);color:#fff;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:13px}
+.hdr-btns button:hover{background:rgba(255,255,255,.28)}
+nav{display:flex;gap:4px;background:#fff;border-bottom:1px solid var(--line);padding:8px 16px;overflow-x:auto;position:sticky;top:0;z-index:50;box-shadow:0 1px 4px rgba(15,23,42,.05)}
+nav button{border:none;background:none;padding:9px 14px;font-size:13.5px;cursor:pointer;color:var(--muted);border-radius:10px;white-space:nowrap;font-weight:500;transition:all .15s}
+nav button.active{color:#fff;background:var(--blue);font-weight:600;box-shadow:0 2px 8px rgba(37,99,235,.35)}
+nav button:hover:not(.active){color:var(--blue-dark);background:var(--blue-light)}
+main{padding:20px;max-width:1200px;margin:0 auto}
+.view{display:none}
+.view.active{display:block}
+h2{font-size:20px;margin-bottom:4px;color:var(--blue-dark)}
+h3{font-size:16px;margin:14px 0 8px;color:var(--blue-dark)}
+.hint{color:var(--muted);font-size:13px;margin-bottom:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;margin-bottom:16px;box-shadow:var(--shadow);transition:box-shadow .2s}
+.card:hover{box-shadow:var(--shadow-lg)}
+.grid{display:grid;gap:14px}
+.grid.cols2{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.grid.cols3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.stat{text-align:center;padding:14px}
+.stat .num{font-size:28px;font-weight:800;letter-spacing:-.02em;background:linear-gradient(120deg,var(--blue-dark),var(--blue));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.stat .lbl{font-size:12.5px;color:var(--muted);margin-top:2px}
+label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin:10px 0 3px}
+input,select,textarea{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;font-size:14px;font-family:inherit;background:#fff;color:var(--ink)}
+textarea{min-height:70px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--blue-light);border-color:var(--blue)}
+button.btn{background:linear-gradient(120deg,var(--blue),#1d4ed8);color:#fff;border:none;padding:9px 18px;border-radius:9px;font-size:14px;cursor:pointer;font-weight:600;margin-top:12px;box-shadow:0 2px 6px rgba(37,99,235,.3);transition:all .15s}
+button.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(37,99,235,.4)}
+button.btn.secondary{background:#fff;color:var(--blue);border:1px solid var(--blue)}
+button.btn.danger{background:#fff;color:var(--red);border:1px solid var(--red)}
+button.btn.small{padding:5px 10px;font-size:12.5px;margin-top:0}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;padding:9px 8px;border-bottom:2px solid var(--line);background:#f8fafc;color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:hover td{background:var(--blue-light)}
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11.5px;font-weight:600}
+.badge.blue{background:var(--blue-light);color:var(--blue-dark)}
+.badge.green{background:var(--green-light);color:var(--green)}
+.badge.amber{background:var(--amber-light);color:var(--amber)}
+.badge.red{background:var(--red-light);color:var(--red)}
+.bar{background:#e5e9ef;border-radius:20px;height:14px;overflow:hidden;margin:4px 0}
+.bar>div{height:100%;border-radius:20px;background:var(--green);transition:width .3s}
+.bar>div.warn{background:var(--amber)}
+.bar>div.over{background:var(--red)}
+.alert{padding:10px 14px;border-radius:8px;margin-bottom:8px;font-size:13.5px;border-left:4px solid}
+.alert.red{background:var(--red-light);border-color:var(--red)}
+.alert.amber{background:var(--amber-light);border-color:var(--amber)}
+.alert.green{background:var(--green-light);border-color:var(--green)}
+.alert.blue{background:var(--blue-light);border-color:var(--blue)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.row>div{flex:1;min-width:130px}
+.steps{list-style:none}
+.steps li{display:flex;gap:12px;padding:10px 4px;border-bottom:1px solid var(--line);align-items:flex-start}
+.steps li:last-child{border-bottom:none}
+.step-check{width:22px;height:22px;flex-shrink:0;margin-top:2px;accent-color:var(--green);cursor:pointer}
+.step-body{flex:1}
+.step-title{font-weight:600;font-size:14px}
+.step-desc{font-size:12.5px;color:var(--muted);margin-top:2px}
+.step-done .step-title{text-decoration:line-through;color:var(--muted)}
+.chip-row{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.chip{background:var(--blue-light);color:var(--blue-dark);border-radius:20px;padding:3px 11px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid transparent}
+.chip.active{background:var(--blue);color:#fff}
+details{border:1px solid var(--line);border-radius:12px;margin-bottom:10px;background:#fff;box-shadow:var(--shadow)}
+summary{padding:12px 16px;cursor:pointer;font-weight:600;font-size:14px;border-radius:10px;transition:background .15s}
+summary:hover{background:var(--blue-light)}
+details>div{padding:4px 16px 14px}
+.rc-meta{font-size:13px;color:var(--muted);margin:4px 0}
+.rc-meta a{color:var(--blue)}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:760px){.two-col{grid-template-columns:1fr}}
+.muted{color:var(--muted);font-size:13px}
+.right{text-align:right}
+.mt0{margin-top:0}
+.flexbtw{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.del-x{color:var(--red);cursor:pointer;font-weight:700;padding:0 6px}
+#printArea{display:none}
+@media print{
+  body *{visibility:hidden}
+  #printArea,#printArea *{visibility:visible}
+  #printArea{display:block;position:absolute;top:0;left:0;width:100%;padding:24px;background:#fff}
+  #printArea h1{font-size:20px;margin-bottom:2px}
+  #printArea h2{font-size:16px;margin:14px 0 6px;color:#000;border-bottom:1px solid #999;padding-bottom:3px}
+  #printArea table{font-size:12px}
+  #printArea td,#printArea th{border:1px solid #bbb;padding:5px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Independent Facilitator — SDP Workspace</h1>
+    <div class="sub">California Self-Determination Program · client process &amp; budget management</div>
+  </div>
+  <div class="hdr-btns">
+    <button id="bkBtn" onclick="backupDir?writeBackup():reconnectBackup()">📁 Set up auto-backup</button>
+    <span id="bkStatus" style="font-size:11px;align-self:center;opacity:.9;cursor:pointer" onclick="reconnectBackup()"></span>
+    <button onclick="exportData()">⬇ Backup data</button>
+    <button onclick="document.getElementById('importFile').click()">⬆ Restore</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+  </div>
+</header>
+<nav id="mainNav">
+  <button data-view="dashboard" class="active">📊 Dashboard</button>
+  <button data-view="clients">👥 Clients</button>
+  <button data-view="process">🗺️ Process</button>
+  <button data-view="budget">💰 Budget</button>
+  <button data-view="goals">🎯 Goals &amp; Asks</button>
+  <button data-view="compliance">✅ Compliance</button>
+  <button data-view="pcp">📋 PCP Builder</button>
+  <button data-view="forms">📝 Forms</button>
+  <button data-view="docs">📂 Documents</button>
+  <button data-view="rcs">🏛️ Regional Centers</button>
+  <button data-view="resources">📚 Resources</button>
+</nav>
+<main>
+<div class="view active" id="view-dashboard"></div>
+<div class="view" id="view-clients"></div>
+<div class="view" id="view-process"></div>
+<div class="view" id="view-budget"></div>
+<div class="view" id="view-goals"></div>
+<div class="view" id="view-compliance"></div>
+<div class="view" id="view-pcp"></div>
+<div class="view" id="view-forms"></div>
+<div class="view" id="view-docs"></div>
+<div class="view" id="view-rcs"></div>
+<div class="view" id="view-resources"></div>
+</main>
+<div id="printArea"></div>
+<script>
+/* ================= REFERENCE DATA ================= */
+const SERVICE_CODES = [
+ {code:"310",name:"Respite (Individual and Agency) In-home",cat:"Living Arrangement"},
+ {code:"311",name:"Respite Facility – Out-of-Home",cat:"Living Arrangement"},
+ {code:"312",name:"Live-In Caregiver",cat:"Living Arrangement"},
+ {code:"313",name:"Homemaker",cat:"Living Arrangement"},
+ {code:"314",name:"Housing Access Supports",cat:"Living Arrangement"},
+ {code:"315",name:"FMS Fiscal Agent (Bill Payer)",cat:"Living Arrangement"},
+ {code:"316",name:"FMS Co-Employer",cat:"Living Arrangement"},
+ {code:"317",name:"FMS Fiscal/Employer Agent (Sole Employer)",cat:"Living Arrangement"},
+ {code:"320",name:"Community Living Supports (Individual and Agency)",cat:"Living Arrangement"},
+ {code:"321",name:"Residential Facility",cat:"Living Arrangement"},
+ {code:"331",name:"Community Integration Supports",cat:"Employment & Community Participation"},
+ {code:"333",name:"Participant-Directed Goods and Services",cat:"Employment & Community Participation"},
+ {code:"334",name:"Individual Training and Education",cat:"Employment & Community Participation"},
+ {code:"335",name:"Employment Supports",cat:"Employment & Community Participation"},
+ {code:"336",name:"Technology Supports",cat:"Employment & Community Participation"},
+ {code:"337",name:"Transition Set-Up Expenses",cat:"Employment & Community Participation"},
+ {code:"338",name:"Non-Medical Transportation",cat:"Employment & Community Participation"},
+ {code:"339",name:"Prevocational Supports",cat:"Employment & Community Participation"},
+ {code:"340",name:"Independent Facilitator",cat:"Employment & Community Participation"},
+ {code:"356",name:"Environmental Accessibility Adaptation",cat:"Health & Safety"},
+ {code:"357",name:"Acupuncture Services",cat:"Health & Safety"},
+ {code:"358",name:"Personal Emergency Response Systems (PERS)",cat:"Health & Safety"},
+ {code:"359",name:"Home Health Aide",cat:"Health & Safety"},
+ {code:"360",name:"Communication Support",cat:"Health & Safety"},
+ {code:"361",name:"Skilled Nursing",cat:"Health & Safety"},
+ {code:"362",name:"Nutritional Consultation",cat:"Health & Safety"},
+ {code:"363",name:"Crisis Intervention and Supports",cat:"Health & Safety"},
+ {code:"364",name:"Behavioral Intervention Services",cat:"Health & Safety"},
+ {code:"365",name:"Specialized Medical Equipment and Supplies",cat:"Health & Safety"},
+ {code:"366",name:"Family/Consumer Training",cat:"Health & Safety"},
+ {code:"367",name:"Dental Services",cat:"Health & Safety"},
+ {code:"368",name:"Lenses and Frames",cat:"Health & Safety"},
+ {code:"369",name:"Optometric-Optician Services",cat:"Health & Safety"},
+ {code:"370",name:"Psychology Services",cat:"Health & Safety"},
+ {code:"371",name:"Training and Counseling for Unpaid Caregivers",cat:"Health & Safety"},
+ {code:"372",name:"Speech – Hearing and Language",cat:"Health & Safety"},
+ {code:"373",name:"Chiropractor",cat:"Health & Safety"},
+ {code:"374",name:"Massage Therapist",cat:"Health & Safety"},
+ {code:"375",name:"Occupational Therapy",cat:"Health & Safety"},
+ {code:"376",name:"Physical Therapy",cat:"Health & Safety"},
+ {code:"377",name:"Vehicle Modifications and Adaptations",cat:"Health & Safety"},
+ {code:"378",name:"Child Day Care Facility (Family Support)",cat:"Health & Safety"}
+];
+const BUDGET_CATS = ["Living Arrangement","Employment & Community Participation","Health & Safety"];
+
+const REGIONAL_CENTERS = [
+ {id:"ACRC",name:"Alta California Regional Center",area:"Sacramento, Alpine, Colusa, El Dorado, Nevada, Placer, Sierra, Sutter, Yolo, Yuba counties",web:"https://www.altaregional.org"},
+ {id:"CVRC",name:"Central Valley Regional Center",area:"Fresno, Kings, Madera, Mariposa, Merced, Tulare counties",web:"https://www.cvrc.org"},
+ {id:"ELARC",name:"Eastern Los Angeles Regional Center",area:"Eastern LA County incl. Alhambra, Whittier",web:"https://www.elarc.org"},
+ {id:"FDLRC",name:"Frank D. Lanterman Regional Center",area:"Central LA, Glendale, Pasadena areas",web:"https://lanterman.org"},
+ {id:"FNRC",name:"Far Northern Regional Center",area:"Butte, Glenn, Lassen, Modoc, Plumas, Shasta, Siskiyou, Tehama, Trinity counties",web:"https://www.farnorthernrc.org"},
+ {id:"GGRC",name:"Golden Gate Regional Center",area:"San Francisco, Marin, San Mateo counties",web:"https://www.ggrc.org"},
+ {id:"HRC",name:"Harbor Regional Center",area:"South LA County: Torrance, Long Beach, Bellflower areas",web:"https://www.harborrc.org"},
+ {id:"IRC",name:"Inland Regional Center",area:"San Bernardino, Riverside counties",web:"https://www.inlandrc.org"},
+ {id:"KRC",name:"Kern Regional Center",area:"Kern, Inyo, Mono counties",web:"https://www.kernrc.org"},
+ {id:"NBRC",name:"North Bay Regional Center",area:"Napa, Solano, Sonoma counties",web:"https://nbrc.net"},
+ {id:"NLACRC",name:"North Los Angeles County Regional Center",area:"San Fernando & Antelope Valleys",web:"https://www.nlacrc.org"},
+ {id:"RCEB",name:"Regional Center of the East Bay",area:"Alameda, Contra Costa counties",web:"https://www.rceb.org"},
+ {id:"RCOC",name:"Regional Center of Orange County",area:"Orange County",web:"https://www.rcocdd.com"},
+ {id:"RCRC",name:"Redwood Coast Regional Center",area:"Del Norte, Humboldt, Lake, Mendocino counties",web:"https://redwoodcoastrc.org"},
+ {id:"SARC",name:"San Andreas Regional Center",area:"Santa Clara, Santa Cruz, San Benito, Monterey counties",web:"https://www.sanandreasregional.org"},
+ {id:"SCLARC",name:"South Central Los Angeles Regional Center",area:"South Central LA",web:"https://sclarc.org"},
+ {id:"SDRC",name:"San Diego Regional Center",area:"San Diego, Imperial counties",web:"https://sdrc.org"},
+ {id:"SGPRC",name:"San Gabriel/Pomona Regional Center",area:"San Gabriel & Pomona Valleys",web:"https://www.sgprc.org"},
+ {id:"TCRC",name:"Tri-Counties Regional Center",area:"San Luis Obispo, Santa Barbara, Ventura counties",web:"https://www.tri-counties.org"},
+ {id:"VMRC",name:"Valley Mountain Regional Center",area:"San Joaquin, Stanislaus, Amador, Calaveras, Tuolumne counties",web:"https://www.vmrc.net"},
+ {id:"WRC",name:"Westside Regional Center",area:"Western LA County: Culver City, Santa Monica, Inglewood areas",web:"https://westsiderc.org"}
+];
+
+const PROCESS_STEPS = [
+ {t:"Initial interest & referral",d:"Client/family expresses interest in SDP; contact RC service coordinator and request SDP information."},
+ {t:"Attend SDP orientation",d:"Required before enrollment. From April 1, 2026: two 2-hour sessions (Part A, then Part B) offered ONLY by SCDD (scdd.ca.gov/sdp-orientation), virtual, 11+ languages. Send both certificates to the service coordinator."},
+ {t:"Enrollment confirmed by regional center",d:"RC confirms participant meets eligibility (WIC 4685.8) and records enrollment; participant chooses to participate voluntarily."},
+ {t:"Independent Facilitator agreement signed",d:"Define your IF role & scope in writing (use the IF Services Agreement template). Payment: pre-enrollment work is RC-paid outside the budget (Initial PCP up to $1,000 code 024; General SD Supports up to 40 hrs code 099); ongoing IF services are paid FROM the individual budget (code 340)."},
+ {t:"Person-Centered Plan (PCP) developed",d:"Facilitate person-centered planning meeting(s). Use the PCP Builder tab to capture strengths, goals, and needed supports."},
+ {t:"Individual budget determined & certified",d:"IPP team determines budget based on last 12 months of POS spending (or equivalent assessment for new needs); budget certified by RC."},
+ {t:"Spending plan developed",d:"Translate the PCP into a spending plan by budget category with service codes and costs. Total must not exceed the individual budget. Use the Budget tab."},
+ {t:"Choose FMS provider & model",d:"Bill Payer (315), Co-Employer (316), or Sole Employer/Fiscal Employer Agent (317). FMS fee is a flat monthly rate set by the state schedule."},
+ {t:"Spending plan certified & attached to IPP",d:"RC certifies items address IPP outcomes, aren't available from generic services, and are eligible for federal financial participation. Run the Compliance Check tab first."},
+ {t:"Transition/start date in SDP",d:"Traditional services end and SDP budget takes effect. Coordinate handoff so there is no gap in services."},
+ {t:"Implementation — hire staff & vendors",d:"Work with FMS on hiring paperwork, rates, background checks, timesheets, and vendor invoices."},
+ {t:"Monthly budget monitoring",d:"Reconcile FMS monthly statements against the spending plan. Log spending in the Budget tab and send the client their update report."},
+ {t:"Spending plan revisions as needed",d:"If needs change, revise the spending plan with the participant and submit to the RC per its local revision process."},
+ {t:"Annual IPP review & budget renewal",d:"Prepare utilization summary, update the PCP if needed, renew budget and spending plan for the next plan year."}
+];
+</script>
+<script>
+/* ================= STATE ================= */
+const LS_KEY = "ifsdp_v1";
+let DB = load();
+function load(){
+  try{ const d = JSON.parse(localStorage.getItem(LS_KEY)); if(d) return d; }catch(e){}
+  return {clients:[], rcNotes:{}, seq:1};
+}
+function save(){ localStorage.setItem(LS_KEY, JSON.stringify(DB)); if(typeof scheduleBackup==="function") scheduleBackup(); }
+function uid(){ return "id"+(DB.seq++); }
+function money(n){ return (n||0).toLocaleString("en-US",{style:"currency",currency:"USD"}); }
+function esc(s){ return (s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function today(){ return new Date().toISOString().slice(0,10); }
+function getClient(id){ return DB.clients.find(c=>c.id===id); }
+function newClient(){ return {id:uid(),name:"",rc:"",coordinator:"",coordPhone:"",phone:"",email:"",planStart:"",planEnd:"",budget:0,fms:"",fmsModel:"",notes:"",
+  steps:PROCESS_STEPS.map(()=>({done:false,date:"",note:""})),
+  plan:[], expenses:[], pcp:{}, compliance:{}, goals:[]}; }
+
+function exportData(){
+  const blob = new Blob([JSON.stringify(DB,null,2)],{type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "if-sdp-backup-"+today()+".json";
+  a.click();
+}
+function importData(ev){
+  const f = ev.target.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = ()=>{ try{ DB = JSON.parse(r.result); save(); renderAll(); alert("Data restored."); }catch(e){ alert("Could not read that file."); } };
+  r.readAsText(f);
+}
+
+/* ================= BROWSER CHECK ================= */
+(function(){
+  if(window.showDirectoryPicker) return; /* Chrome/Edge — all good */
+  const main=document.querySelector("main");
+  const d=document.createElement("div");
+  d.className="alert amber";
+  d.innerHTML='<strong>You\'re in a browser without folder access (like Safari).</strong> The app works, but auto-backup, document filing, and the RC forms library are off. '+
+  '<button class="btn small secondary" onclick="copyAppPath()" style="margin:0 4px">Copy this file\'s location</button> then open Chrome and paste it in the address bar. '+
+  'To make double-clicking always use Chrome: in Finder, right-click the app file → <em>Get Info</em> → <em>Open with:</em> Google Chrome → <em>Change All…</em>';
+  main.insertBefore(d,main.firstChild);
+})();
+function copyAppPath(){
+  navigator.clipboard.writeText(location.href).then(
+    ()=>alert("Copied! Open Chrome, click the address bar, paste (Cmd+V), and press Enter. Your client data will come along via your backup file if needed (Restore button)."),
+    ()=>prompt("Copy this address, then paste it into Chrome:",location.href)
+  );
+}
+/* ================= NAV ================= */
+document.getElementById("mainNav").addEventListener("click",e=>{
+  if(e.target.dataset.view) showView(e.target.dataset.view);
+});
+function showView(v){
+  document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===v));
+  document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));
+  document.getElementById("view-"+v).classList.add("active");
+  render(v);
+}
+function renderAll(){ ["dashboard","clients","process","budget","goals","compliance","pcp","forms","docs","rcs","resources"].forEach(render); }
+function render(v){ ({dashboard:renderDashboard,clients:renderClients,process:renderProcess,budget:renderBudget,goals:renderGoals,compliance:renderCompliance,pcp:renderPCP,forms:renderForms,docs:renderDocs,rcs:renderRCs,resources:renderResources})[v](); }
+
+/* ================= HELPERS: budget math ================= */
+function planTotal(c){ return c.plan.reduce((s,i)=>s+(+i.annual||0),0); }
+function spentTotal(c){ return c.expenses.reduce((s,e)=>s+(+e.amount||0),0); }
+function spentForItem(c,itemId){ return c.expenses.filter(e=>e.itemId===itemId).reduce((s,e)=>s+(+e.amount||0),0); }
+function planYearPct(c){
+  if(!c.planStart||!c.planEnd) return null;
+  const s=new Date(c.planStart), e=new Date(c.planEnd), n=new Date();
+  if(n<=s) return 0; if(n>=e) return 100;
+  return Math.round((n-s)/(e-s)*100);
+}
+function utilization(c){ return c.budget>0 ? spentTotal(c)/c.budget*100 : 0; }
+function clientAlerts(c){
+  const out=[];
+  const pt=planTotal(c);
+  if(c.budget>0 && pt>c.budget) out.push({lv:"red",msg:"Spending plan ("+money(pt)+") exceeds the individual budget ("+money(c.budget)+")."});
+  const yp=planYearPct(c), up=utilization(c);
+  if(yp!==null && c.budget>0){
+    if(up-yp>15) out.push({lv:"red",msg:"Spending pace is well ahead of the plan year ("+Math.round(up)+"% spent at "+yp+"% of year)."});
+    else if(up-yp>5) out.push({lv:"amber",msg:"Spending slightly ahead of plan year ("+Math.round(up)+"% spent at "+yp+"% of year)."});
+    if(yp-up>25 && yp>40) out.push({lv:"amber",msg:"Significant underspending ("+Math.round(up)+"% spent at "+yp+"% of year) — funds may go unused; consider a spending plan revision."});
+  }
+  if(c.planEnd){
+    const days=Math.ceil((new Date(c.planEnd)-new Date())/86400000);
+    if(days>=0&&days<=60) out.push({lv:"amber",msg:"Plan year ends in "+days+" days — start annual IPP review / budget renewal."});
+    if(days<0) out.push({lv:"red",msg:"Plan year end date has passed — renew budget & spending plan."});
+  }
+  c.plan.forEach(i=>{
+    const sp=spentForItem(c,i.id);
+    if(+i.annual>0 && sp>+i.annual) out.push({lv:"red",msg:"Line over budget: "+i.desc+" ("+money(sp)+" of "+money(+i.annual)+")."});
+  });
+  return out;
+}
+
+/* ================= DASHBOARD ================= */
+function renderDashboard(){
+  const el=document.getElementById("view-dashboard");
+  const cs=DB.clients;
+  const totBudget=cs.reduce((s,c)=>s+(+c.budget||0),0);
+  const totSpent=cs.reduce((s,c)=>s+spentTotal(c),0);
+  let alerts=[];
+  cs.forEach(c=>clientAlerts(c).forEach(a=>alerts.push({...a,name:c.name})));
+  cs.forEach(c=>{ const m=missingDocs(c); if(m.length) alerts.push({lv:"amber",name:c.name,msg:"Documents still needed: "+m.join(", ")+"."}); });
+  let html=`<h2>Dashboard</h2><p class="hint">Caseload overview. Everything is saved automatically in this browser. Turn on 📁 auto-backup (top right) to also save each client's file to a folder you choose — point it at Google Drive for Desktop and it syncs to the cloud.</p>
+  <div class="grid cols3">
+    <div class="card stat"><div class="num">${cs.length}</div><div class="lbl">Active clients</div></div>
+    <div class="card stat"><div class="num">${money(totBudget)}</div><div class="lbl">Combined annual budgets</div></div>
+    <div class="card stat"><div class="num">${money(totSpent)}</div><div class="lbl">Total logged spending</div></div>
+  </div>`;
+  html+=`<h3>Alerts</h3>`;
+  if(!alerts.length) html+=`<div class="alert green">No alerts — all clients are on track.</div>`;
+  alerts.forEach(a=>html+=`<div class="alert ${a.lv}"><strong>${esc(a.name)||"Client"}:</strong> ${a.msg}</div>`);
+  html+=`<h3>Clients at a glance</h3>`;
+  if(!cs.length) html+=`<div class="card">No clients yet. Add your first client in the <strong>Clients</strong> tab.</div>`;
+  else{
+    html+=`<div class="card"><table><tr><th>Client</th><th>Regional center</th><th>Process</th><th>Budget used</th><th></th></tr>`;
+    cs.forEach(c=>{
+      const done=c.steps.filter(s=>s.done).length;
+      const up=Math.min(utilization(c),100);
+      const cls=utilization(c)>100?"over":(utilization(c)>85?"warn":"");
+      html+=`<tr><td><strong>${esc(c.name)}</strong></td><td>${esc(c.rc)}</td>
+      <td>${done}/${PROCESS_STEPS.length} steps</td>
+      <td style="min-width:160px">${money(spentTotal(c))} of ${money(+c.budget)}<div class="bar"><div class="${cls}" style="width:${up}%"></div></div></td>
+      <td><button class="btn small secondary" onclick="previewClientReport('${c.id}')">Client report</button></td></tr>`;
+    });
+    html+=`</table></div>`;
+  }
+  el.innerHTML=html;
+}
+
+/* ================= CLIENTS ================= */
+let editingClient=null;
+function renderClients(){
+  const el=document.getElementById("view-clients");
+  let html=`<h2>Clients</h2><p class="hint">Add each SDP participant you support. All other tabs draw from this list.</p>`;
+  html+=`<div class="card"><table><tr><th>Name</th><th>Regional center</th><th>Plan year</th><th>Annual budget</th><th>FMS</th><th></th><th></th></tr>`;
+  DB.clients.forEach(c=>{
+    html+=`<tr><td><strong>${esc(c.name)}</strong></td><td>${esc(c.rc)}</td>
+    <td>${esc(c.planStart)} → ${esc(c.planEnd)}</td><td>${money(+c.budget)}</td><td>${esc(c.fms)} ${c.fmsModel?'<span class="badge blue">'+esc(c.fmsModel)+'</span>':''}</td>
+    <td><button class="btn small secondary" onclick="editClient('${c.id}')">Edit</button></td>
+    <td><span class="del-x" title="Delete" onclick="delClient('${c.id}')">✕</span></td></tr>`;
+  });
+  if(!DB.clients.length) html+=`<tr><td colspan="7" class="muted">No clients yet.</td></tr>`;
+  html+=`</table><button class="btn" onclick="editClient(null)">+ Add client</button></div>`;
+  html+=`<div id="clientForm"></div>`;
+  el.innerHTML=html;
+  if(editingClient!==undefined && editingClient!==null) drawClientForm();
+}
+function editClient(id){
+  editingClient = id ? getClient(id) : newClient();
+  drawClientForm();
+}
+function delClient(id){
+  const c=getClient(id);
+  if(confirm("Delete "+(c.name||"this client")+" and all their data?")){
+    DB.clients=DB.clients.filter(x=>x.id!==id); save(); renderAll();
+  }
+}
+function drawClientForm(){
+  const c=editingClient; if(!c) return;
+  const isNew=!DB.clients.includes(c);
+  const rcOpts=REGIONAL_CENTERS.map(r=>`<option ${c.rc===r.id?"selected":""} value="${r.id}">${r.id} — ${r.name}</option>`).join("");
+  document.getElementById("clientForm").innerHTML=`<div class="card"><h3 class="mt0">${isNew?"New client":"Edit: "+esc(c.name)}</h3>
+  <div class="row">
+    <div><label>Full name</label><input id="cf_name" value="${esc(c.name)}"></div>
+    <div><label>Regional center</label><select id="cf_rc"><option value="">— select —</option>${rcOpts}</select></div>
+  </div>
+  <div class="row">
+    <div><label>Service coordinator</label><input id="cf_coord" value="${esc(c.coordinator)}"></div>
+    <div><label>Coordinator phone/email</label><input id="cf_coordp" value="${esc(c.coordPhone)}"></div>
+  </div>
+  <div class="row">
+    <div><label>Client/family phone</label><input id="cf_phone" value="${esc(c.phone)}"></div>
+    <div><label>Client/family email</label><input id="cf_email" value="${esc(c.email)}"></div>
+  </div>
+  <div class="row">
+    <div><label>Additional contact 1 — name & relation <span style="font-weight:400">(optional)</span></label><input id="cf_c2name" value="${esc(c.c2name||"")}" placeholder="e.g. Rosa (mom)"></div>
+    <div><label>Phone</label><input id="cf_c2phone" value="${esc(c.c2phone||"")}"></div>
+    <div><label>Email</label><input id="cf_c2email" value="${esc(c.c2email||"")}"></div>
+  </div>
+  <div class="row">
+    <div><label>Additional contact 2 — name & relation <span style="font-weight:400">(optional)</span></label><input id="cf_c3name" value="${esc(c.c3name||"")}" placeholder="e.g. Luis (brother)"></div>
+    <div><label>Phone</label><input id="cf_c3phone" value="${esc(c.c3phone||"")}"></div>
+    <div><label>Email</label><input id="cf_c3email" value="${esc(c.c3email||"")}"></div>
+  </div>
+  <div class="row">
+    <div><label>Plan year start</label><input type="date" id="cf_start" value="${esc(c.planStart)}"></div>
+    <div><label>Plan year end</label><input type="date" id="cf_end" value="${esc(c.planEnd)}"></div>
+    <div><label>Certified annual budget ($)</label><input type="number" min="0" step="0.01" id="cf_budget" value="${c.budget||""}"></div>
+  </div>
+  <div class="row">
+    <div><label>FMS provider</label><input id="cf_fms" value="${esc(c.fms)}"></div>
+    <div><label>FMS model</label><select id="cf_fmsm">
+      <option value="">— select —</option>
+      ${["Bill Payer (315)","Co-Employer (316)","Sole Employer (317)"].map(m=>`<option ${c.fmsModel===m?"selected":""}>${m}</option>`).join("")}
+    </select></div>
+  </div>
+  <label>Notes</label><textarea id="cf_notes">${esc(c.notes)}</textarea>
+  <button class="btn" onclick="saveClient()">Save client</button>
+  <button class="btn secondary" onclick="editingClient=null;renderClients()">Cancel</button></div>`;
+}
+function saveClient(){
+  const c=editingClient;
+  c.name=v("cf_name"); c.rc=v("cf_rc"); c.coordinator=v("cf_coord"); c.coordPhone=v("cf_coordp");
+  c.phone=v("cf_phone"); c.email=v("cf_email"); c.planStart=v("cf_start"); c.planEnd=v("cf_end");
+  c.c2name=v("cf_c2name"); c.c2phone=v("cf_c2phone"); c.c2email=v("cf_c2email");
+  c.c3name=v("cf_c3name"); c.c3phone=v("cf_c3phone"); c.c3email=v("cf_c3email");
+  c.budget=+v("cf_budget")||0; c.fms=v("cf_fms"); c.fmsModel=v("cf_fmsm"); c.notes=v("cf_notes");
+  if(!c.name){ alert("Please enter a name."); return; }
+  if(!DB.clients.includes(c)) DB.clients.push(c);
+  editingClient=null; save(); renderAll();
+}
+function v(id){ return document.getElementById(id).value.trim(); }
+</script>
+<script>
+/* ================= CLIENT PICKER (shared) ================= */
+const picked={process:null,budget:null,goals:null,compliance:null,pcp:null,forms:null,docs:null};
+function pickerHtml(view){
+  if(!DB.clients.length) return `<div class="card">Add a client first (Clients tab).</div>`;
+  if(!picked[view]||!getClient(picked[view])) picked[view]=DB.clients[0].id;
+  return `<div class="chip-row">`+DB.clients.map(c=>
+    `<span class="chip ${picked[view]===c.id?"active":""}" onclick="picked['${view}']='${c.id}';render('${view}')">${esc(c.name)}</span>`).join("")+`</div>`;
+}
+
+/* ================= PROCESS TRACKER ================= */
+function renderProcess(){
+  const el=document.getElementById("view-process");
+  let html=`<h2>Process Tracker</h2><p class="hint">The SDP journey from first interest to ongoing facilitation. Check steps off per client; add dates and notes.</p>${pickerHtml("process")}`;
+  const c=getClient(picked.process);
+  if(c){
+    const done=c.steps.filter(s=>s.done).length;
+    html+=`<div class="card"><div class="flexbtw"><h3 class="mt0">${esc(c.name)} — ${done}/${PROCESS_STEPS.length} steps complete</h3>
+    <span class="badge ${done===PROCESS_STEPS.length?"green":"blue"}">${done===PROCESS_STEPS.length?"Complete":"In progress"}</span></div>
+    <div class="bar"><div style="width:${Math.round(done/PROCESS_STEPS.length*100)}%"></div></div><ul class="steps">`;
+    PROCESS_STEPS.forEach((s,i)=>{
+      const st=c.steps[i];
+      html+=`<li class="${st.done?"step-done":""}">
+      <input type="checkbox" class="step-check" ${st.done?"checked":""} onchange="toggleStep('${c.id}',${i},this.checked)">
+      <div class="step-body"><div class="step-title">${i+1}. ${s.t}</div><div class="step-desc">${s.d}</div>
+      <div class="row"><div><label>Date</label><input type="date" value="${esc(st.date)}" onchange="stepField('${c.id}',${i},'date',this.value)"></div>
+      <div style="flex:3"><label>Note</label><input value="${esc(st.note)}" placeholder="e.g. orientation certificate received" onchange="stepField('${c.id}',${i},'note',this.value)"></div></div>
+      </div></li>`;
+    });
+    html+=`</ul></div>`;
+  }
+  el.innerHTML=html;
+}
+function toggleStep(cid,i,val){ const c=getClient(cid); c.steps[i].done=val; if(val&&!c.steps[i].date)c.steps[i].date=today(); save(); renderProcess(); renderDashboard(); }
+function stepField(cid,i,f,val){ getClient(cid).steps[i][f]=val; save(); }
+
+/* ================= BUDGET & SPENDING ================= */
+function renderBudget(){
+  const el=document.getElementById("view-budget");
+  let html=`<h2>Budget &amp; Spending</h2><p class="hint">Build the spending plan by budget category, log actual spending from FMS monthly statements, and generate client update reports.</p>${pickerHtml("budget")}`;
+  const c=getClient(picked.budget);
+  if(c){
+    const pt=planTotal(c), sp=spentTotal(c), rem=c.budget-sp, up=utilization(c), yp=planYearPct(c);
+    const cls=up>100?"over":(up>85?"warn":"");
+    html+=`<div class="grid cols3">
+      <div class="card stat"><div class="num">${money(+c.budget)}</div><div class="lbl">Certified annual budget</div></div>
+      <div class="card stat"><div class="num">${money(pt)}</div><div class="lbl">Spending plan total ${pt>c.budget?'<span class="badge red">over budget</span>':'<span class="badge green">within budget</span>'}</div></div>
+      <div class="card stat"><div class="num">${money(rem)}</div><div class="lbl">Remaining (budget − spent)</div></div>
+    </div>
+    <div class="card"><strong>Budget utilization:</strong> ${money(sp)} spent — ${Math.round(up)}% of budget${yp!==null?" at "+yp+"% of the plan year":""}
+    <div class="bar"><div class="${cls}" style="width:${Math.min(up,100)}%"></div></div></div>`;
+    html+=planYearCard(c);
+    html+=fmsCard(c);
+
+    /* spending plan lines */
+    html+=`<div class="card"><h3 class="mt0">Spending plan</h3><table><tr><th>Category</th><th>Code</th><th>Service / provider</th><th class="right">Annual $</th><th class="right">Spent</th><th class="right">Left</th><th></th></tr>`;
+    BUDGET_CATS.forEach(cat=>{
+      const items=c.plan.filter(i=>i.cat===cat);
+      if(items.length) html+=`<tr><td colspan="7" style="background:var(--blue-light);font-weight:600">${cat} — ${money(items.reduce((s,i)=>s+(+i.annual||0),0))}</td></tr>`;
+      items.forEach(i=>{
+        const s2=spentForItem(c,i.id), left=(+i.annual||0)-s2;
+        html+=`<tr><td></td><td>${esc(i.code)}</td><td>${esc(i.desc)}</td><td class="right">${money(+i.annual)}</td>
+        <td class="right">${money(s2)}</td><td class="right" style="color:${left<0?"var(--red)":"inherit"}">${money(left)}${i.pending>0?`<div class="muted" style="font-size:11px">+${money(i.pending)} pending</div>`:""}${perMonthLeft(c,left)?`<div class="muted" style="font-size:11px">≈${perMonthLeft(c,left)}</div>`:""}</td>
+        <td><span class="del-x" onclick="delPlanItem('${c.id}','${i.id}')">✕</span></td></tr>`;
+      });
+    });
+    html+=`</table>
+    <div class="row"><div><label>Service code</label><select id="bp_code">${SERVICE_CODES.map(s=>`<option value="${s.code}">${s.code} — ${s.name}</option>`).join("")}</select></div>
+    <div><label>Description / provider</label><input id="bp_desc" placeholder="e.g. Respite — ABC Agency"></div>
+    <div><label>Annual amount ($)</label><input type="number" id="bp_amt" min="0" step="0.01"></div>
+    <div><button class="btn" onclick="addPlanItem('${c.id}')">Add line</button></div></div></div>`;
+
+    /* expenses */
+    const itemOpts=c.plan.map(i=>`<option value="${i.id}">${esc(i.code)} — ${esc(i.desc)}</option>`).join("");
+    html+=`<div class="card"><h3 class="mt0">Spending log</h3>
+    <div class="row"><div><label>Date</label><input type="date" id="ex_date" value="${today()}"></div>
+    <div style="flex:2"><label>Spending plan line</label><select id="ex_item">${itemOpts||'<option value="">— add plan lines first —</option>'}</select></div>
+    <div><label>Amount ($)</label><input type="number" id="ex_amt" min="0" step="0.01"></div>
+    <div style="flex:2"><label>Note</label><input id="ex_note" placeholder="e.g. May FMS statement"></div>
+    <div><button class="btn" onclick="addExpense('${c.id}')">Log</button></div></div><table><tr><th>Date</th><th>Line</th><th class="right">Amount</th><th>Note</th><th></th></tr>`;
+    [...c.expenses].sort((a,b)=>b.date.localeCompare(a.date)).forEach(e=>{
+      const item=c.plan.find(i=>i.id===e.itemId);
+      html+=`<tr><td>${esc(e.date)}</td><td>${item?esc(item.code+" — "+item.desc):"(deleted line)"}</td><td class="right">${money(+e.amount)}</td><td>${esc(e.note)}</td>
+      <td><span class="del-x" onclick="delExpense('${c.id}','${e.id}')">✕</span></td></tr>`;
+    });
+    if(!c.expenses.length) html+=`<tr><td colspan="5" class="muted">Nothing logged yet.</td></tr>`;
+    html+=`</table></div>`;
+    html+=fmsImportCard(c);
+    html+=`<button class="btn secondary" onclick="previewClientReport('${c.id}')">👁 Preview client report</button> <button class="btn" onclick="printClientReport('${c.id}')">🖨 Print client report</button> <button class="btn" onclick="reportPdf('${c.id}')">📄 PDF for email</button>`;
+  }
+  el.innerHTML=html;
+}
+function addPlanItem(cid){
+  const c=getClient(cid);
+  const code=v("bp_code"), desc=v("bp_desc"), amt=+v("bp_amt")||0;
+  if(!desc){ alert("Add a description."); return; }
+  const sc=SERVICE_CODES.find(s=>s.code===code);
+  c.plan.push({id:uid(),code,cat:sc.cat,desc,annual:amt});
+  save(); renderBudget(); renderDashboard();
+}
+function delPlanItem(cid,iid){ const c=getClient(cid); c.plan=c.plan.filter(i=>i.id!==iid); save(); renderBudget(); }
+function addExpense(cid){
+  const c=getClient(cid);
+  const itemId=v("ex_item"), amt=+v("ex_amt")||0;
+  if(!itemId||!amt){ alert("Pick a plan line and enter an amount."); return; }
+  c.expenses.push({id:uid(),date:v("ex_date")||today(),itemId,amount:amt,note:v("ex_note")});
+  save(); renderBudget(); renderDashboard();
+}
+function delExpense(cid,eid){ const c=getClient(cid); c.expenses=c.expenses.filter(e=>e.id!==eid); save(); renderBudget(); }
+
+/* ================= CLIENT UPDATE REPORT (print) ================= */
+function clientReportHtml(cid){
+  const c=getClient(cid); if(!c) return "";
+  const sp=spentTotal(c), rem=c.budget-sp, up=Math.round(utilization(c)), yp=planYearPct(c);
+  let h=`<h1>SDP Budget Update — ${esc(c.name)}</h1>
+  <p>Prepared ${new Date().toLocaleDateString()} by your Independent Facilitator · Regional Center: ${esc(c.rc)} · Plan year ${esc(c.planStart)} to ${esc(c.planEnd)}</p>
+  <h2>Summary</h2>
+  <table><tr><th>Certified annual budget</th><th>Spent to date</th><th>Remaining</th><th>% budget used</th><th>% of plan year elapsed</th></tr>
+  <tr><td>${money(+c.budget)}</td><td>${money(sp)}</td><td>${money(rem)}</td><td>${up}%</td><td>${yp===null?"—":yp+"%"}</td></tr></table>
+  ${(()=>{const py=planYearInfo(c);return py&&!py.over?`<p><strong>Budget effective ${fmtDate(py.start)} through ${fmtDate(py.end)} — ${py.remaining} of ${py.total} months remaining.</strong> Spending evenly, about ${money(py.remaining>0?rem/py.remaining:0)} is available per remaining month.</p>`:"";})()}
+  <h2>Spending plan status</h2><table><tr><th>Category</th><th>Code</th><th>Service</th><th>Annual budget</th><th>Spent</th><th>Remaining</th><th>Per remaining month</th></tr>`;
+  c.plan.forEach(i=>{
+    const s2=spentForItem(c,i.id); const pm=perMonthLeft(c,(+i.annual||0)-s2);
+    h+=`<tr><td>${i.cat}</td><td>${esc(i.code)}</td><td>${esc(i.desc)}</td><td>${money(+i.annual)}</td><td>${money(s2)}</td><td>${money((+i.annual||0)-s2)}</td><td>${pm?"≈"+pm:"—"}</td></tr>`;
+  });
+  h+=`</table>`;
+  const al=clientAlerts(c);
+  if(al.length){ h+=`<h2>Things to watch</h2><ul>`; al.forEach(a=>h+=`<li>${a.msg}</li>`); h+=`</ul>`; }
+  h+=`<p style="margin-top:18px;font-size:11px">Figures reflect spending logged by the facilitator and should be reconciled against FMS monthly statements.</p>`;
+  return h;
+}
+function printClientReport(cid){ const r=clientReportHtml(cid); if(r) doPrint(r); }
+function previewClientReport(cid){ const r=clientReportHtml(cid); if(r) showPreview(r,cid); }
+function showPreview(html,cid){
+  let ov=document.getElementById("previewOverlay");
+  if(!ov){ ov=document.createElement("div"); ov.id="previewOverlay"; document.body.appendChild(ov); }
+  ov.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:flex;align-items:flex-start;justify-content:center;padding:30px 12px;overflow:auto";
+  ov.innerHTML=`<div style="background:#fff;max-width:820px;width:100%;border-radius:10px;padding:24px 28px;box-shadow:0 10px 40px rgba(0,0,0,.3)">
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:10px;flex-wrap:wrap">
+    <button class="btn small" onclick="doPrint(document.getElementById('previewBody').innerHTML)">🖨 Print</button>
+    ${cid?`<button class="btn small" onclick="reportPdf('${cid}')">📄 Save as PDF</button>`:""}
+    ${cid?`<button class="btn small secondary" onclick="emailUpdate('${cid}')">✉ Email update</button>`:""}
+    <button class="btn small secondary" onclick="closePreview()">✕ Close</button>
+  </div>
+  <div id="previewBody" style="font-size:13.5px">${html}</div></div>`;
+  ov.onclick=e=>{ if(e.target===ov) closePreview(); };
+}
+function closePreview(){ const ov=document.getElementById("previewOverlay"); if(ov) ov.style.display="none"; }
+function doPrint(html){
+  document.getElementById("printArea").innerHTML=html;
+  window.print();
+}
+</script>
+<script>
+/* ================= COMPLIANCE CHECK ================= */
+const COMP_ITEM_CRITERIA=[
+ {k:"ipp",label:"Addresses a desired outcome identified in the IPP (WIC 4685.8(d)(3)(C)(i))"},
+ {k:"generic",label:"Not available from generic services (schools, Medi-Cal, IHSS, etc.) (WIC 4685.8(d)(3)(C)(ii))"},
+ {k:"ffp",label:"Eligible for federal financial participation (WIC 4685.8(d)(3)(C)(iii))"}
+];
+const COMP_PLAN_CHECKS=[
+ {k:"attached",label:"A copy of the spending plan is attached to the participant's IPP"},
+ {k:"timing",label:"Funds are distributed across the year to match the timing of anticipated expenditures, so services last the full plan year"},
+ {k:"fmsline",label:"FMS is included in the spending plan (service code 315, 316, or 317)"},
+ {k:"orientation",label:"Participant completed the required SDP orientation"},
+ {k:"costeff",label:"Cost-effectiveness reviewed (per AB 143, DDS is defining 'cost effective' by directive — expected Aug 2026; check the latest DDS guidance)"}
+];
+function renderCompliance(){
+  const el=document.getElementById("view-compliance");
+  let html=`<h2>Spending Plan Compliance Check</h2><p class="hint">Run this before submitting a spending plan for regional center certification. Automatic checks run on the plan itself; confirm the rest with checkboxes.</p>${pickerHtml("compliance")}`;
+  const c=getClient(picked.compliance);
+  if(c){
+    if(!c.compliance) c.compliance={};
+    const pt=planTotal(c);
+    /* automatic checks */
+    const auto=[
+      {ok:c.budget>0,msg:c.budget>0?"Certified individual budget entered: "+money(+c.budget):"No certified budget entered on the client record."},
+      {ok:c.plan.length>0,msg:c.plan.length>0?"Spending plan has "+c.plan.length+" line(s).":"Spending plan is empty."},
+      {ok:pt<=c.budget&&c.budget>0,msg:"Spending plan total "+money(pt)+(pt<=c.budget?" is within ":" EXCEEDS ")+"the individual budget "+money(+c.budget)+". Total may not exceed the budget (WIC 4685.8)."},
+      {ok:c.plan.every(i=>+i.annual>0),msg:c.plan.every(i=>+i.annual>0)?"Every line identifies its cost.":"Some plan lines are missing a cost — each good/service must have its cost identified."},
+      {ok:c.plan.some(i=>["315","316","317"].includes(i.code)),msg:c.plan.some(i=>["315","316","317"].includes(i.code))?"FMS line present.":"No FMS line (315/316/317) found in the plan."}
+    ];
+    html+=`<div class="card"><h3 class="mt0">Automatic checks</h3>`;
+    auto.forEach(a=>html+=`<div class="alert ${a.ok?"green":"red"}">${a.ok?"✔":"✘"} ${a.msg}</div>`);
+    html+=`</div>`;
+    /* per-item certification criteria */
+    html+=`<div class="card"><h3 class="mt0">Certification criteria — per plan line</h3><p class="muted">The regional center certifies each good/service against all three criteria. Confirm your documentation supports each one.</p>`;
+    if(!c.plan.length) html+=`<p class="muted">Add spending plan lines in the Budget tab first.</p>`;
+    c.plan.forEach(i=>{
+      if(!c.compliance[i.id]) c.compliance[i.id]={};
+      html+=`<details><summary>${esc(i.code)} — ${esc(i.desc)} ${COMP_ITEM_CRITERIA.every(cr=>c.compliance[i.id][cr.k])?'<span class="badge green">ready</span>':'<span class="badge amber">incomplete</span>'}</summary><div>`;
+      COMP_ITEM_CRITERIA.forEach(cr=>{
+        html+=`<label style="display:flex;gap:8px;align-items:flex-start;font-weight:400;font-size:13.5px;margin:8px 0">
+        <input type="checkbox" style="width:18px;height:18px;accent-color:var(--green)" ${c.compliance[i.id][cr.k]?"checked":""}
+        onchange="compItem('${c.id}','${i.id}','${cr.k}',this.checked)"> ${cr.label}</label>`;
+      });
+      html+=`</div></details>`;
+    });
+    html+=`</div>`;
+    /* whole-plan checklist */
+    if(!c.compliance._plan) c.compliance._plan={};
+    html+=`<div class="card"><h3 class="mt0">Whole-plan checklist</h3>`;
+    COMP_PLAN_CHECKS.forEach(cr=>{
+      html+=`<label style="display:flex;gap:8px;align-items:flex-start;font-weight:400;font-size:13.5px;margin:8px 0">
+      <input type="checkbox" style="width:18px;height:18px;accent-color:var(--green)" ${c.compliance._plan[cr.k]?"checked":""}
+      onchange="compPlan('${c.id}','${cr.k}',this.checked)"> ${cr.label}</label>`;
+    });
+    html+=`</div>`;
+    const allAuto=auto.every(a=>a.ok);
+    const allItems=c.plan.length&&c.plan.every(i=>COMP_ITEM_CRITERIA.every(cr=>c.compliance[i.id]&&c.compliance[i.id][cr.k]));
+    const allPlan=COMP_PLAN_CHECKS.every(cr=>c.compliance._plan[cr.k]);
+    html+= (allAuto&&allItems&&allPlan)
+      ? `<div class="alert green"><strong>✔ Ready for submission.</strong> All checks pass — submit to ${esc(c.rc)||"the regional center"} for certification.</div>`
+      : `<div class="alert amber"><strong>Not ready yet.</strong> Resolve the items above before submitting for certification.</div>`;
+  }
+  el.innerHTML=html;
+}
+function compItem(cid,iid,k,val){ const c=getClient(cid); if(!c.compliance[iid])c.compliance[iid]={}; c.compliance[iid][k]=val; save(); renderCompliance(); }
+function compPlan(cid,k,val){ const c=getClient(cid); if(!c.compliance._plan)c.compliance._plan={}; c.compliance._plan[k]=val; save(); renderCompliance(); }
+
+/* ================= PCP BUILDER ================= */
+const PCP_SECTIONS=[
+ {k:"about",t:"About the person",p:"Who they are, their story, what people like and admire about them, strengths and gifts."},
+ {k:"importantTo",t:"What is important TO the person",p:"People, routines, places, activities, things that make a good day — from the person's own perspective."},
+ {k:"importantFor",t:"What is important FOR the person",p:"Health, safety, and support needs others must keep in mind — balanced against what matters to them."},
+ {k:"communication",t:"How the person communicates",p:"Communication style/devices; how they express yes/no, joy, discomfort; how best to talk with them."},
+ {k:"goals",t:"Goals & desired outcomes",p:"What the person wants their life to look like — living situation, work, learning, relationships, community. These become IPP outcomes."},
+ {k:"supports",t:"Supports needed to reach the goals",p:"Specific services and supports (paid and unpaid) that will help achieve each goal — these drive the spending plan."},
+ {k:"team",t:"Circle of support",p:"Family, friends, professionals — who is on the team and what role each plays."},
+ {k:"action",t:"Action plan",p:"Who will do what by when to put the plan into motion."}
+];
+function renderPCP(){
+  const el=document.getElementById("view-pcp");
+  let html=`<h2>Person-Centered Plan Builder</h2><p class="hint">Capture the person-centered planning conversation, then print a clean PCP report to share with the participant, family, and regional center.</p>${pickerHtml("pcp")}`;
+  const c=getClient(picked.pcp);
+  if(c){
+    if(!c.pcp) c.pcp={};
+    html+=`<div class="card"><h3 class="mt0">${esc(c.name)} — Person-Centered Plan</h3>
+    <div class="row"><div><label>Plan meeting date</label><input type="date" value="${esc(c.pcp._date||"")}" onchange="pcpField('${c.id}','_date',this.value)"></div>
+    <div style="flex:2"><label>Who participated</label><input value="${esc(c.pcp._who||"")}" placeholder="e.g. Maria, her mom, sister, IF Leona" onchange="pcpField('${c.id}','_who',this.value)"></div></div>`;
+    html+=ippPanel(c);
+    PCP_SECTIONS.forEach(s=>{
+      html+=`<label>${s.t}</label><textarea placeholder="${s.p}" onchange="pcpField('${c.id}','${s.k}',this.value)">${esc(c.pcp[s.k]||"")}</textarea>`;
+      html+=ippHints(c,s);
+    });
+    html+=`<button class="btn" onclick="printPCP('${c.id}')">🖨 Print PCP report</button> <button class="btn secondary" onclick="copyPcpDeckPrompt('${c.id}')">📽 Copy prompt: PCP presentation (for Claude)</button></div>`;
+  }
+  el.innerHTML=html;
+}
+function pcpField(cid,k,val){ const c=getClient(cid); if(!c.pcp)c.pcp={}; c.pcp[k]=val; save(); }
+function printPCP(cid){
+  const c=getClient(cid);
+  let h=`<h1>Person-Centered Plan — ${esc(c.name)}</h1>
+  <p>Meeting date: ${esc(c.pcp._date||"—")} · Participants: ${esc(c.pcp._who||"—")} · Regional center: ${esc(c.rc||"—")} · Prepared ${new Date().toLocaleDateString()}</p>`;
+  PCP_SECTIONS.forEach(s=>{ h+=`<h2>${s.t}</h2><p style="white-space:pre-wrap">${esc(c.pcp[s.k]||"—")}</p>`; });
+  doPrint(h);
+}
+</script>
+<script>
+/* ================= REGIONAL CENTERS ================= */
+function renderRCs(){
+  const el=document.getElementById("view-rcs");
+  let html=`<h2>Regional Centers</h2><p class="hint">All 21 California regional centers. Each RC runs SDP a little differently — its own orientation schedule, spending plan form, revision process, and Local Volunteer Advisory Committee (LVAC). Use the notes field to record each center's specific process and forms as you learn them; your notes are saved.</p>
+  <div class="alert blue">Tip: on each RC website, search "Self-Determination" to find its SDP page, local forms, orientation calendar, and LVAC meeting schedule.</div>`;
+  REGIONAL_CENTERS.forEach(r=>{
+    const myClients=DB.clients.filter(c=>c.rc===r.id);
+    html+=`<details><summary>${r.id} — ${r.name} ${myClients.length?'<span class="badge blue">'+myClients.length+' client'+(myClients.length>1?'s':'')+'</span>':''}</summary><div>
+    <div class="rc-meta"><strong>Serves:</strong> ${r.area}</div>
+    <div class="rc-meta"><strong>Website:</strong> <a href="${r.web}" target="_blank" rel="noopener">${r.web}</a> · <a href="${r.web}" target="_blank" rel="noopener">find its SDP page →</a></div>
+    ${myClients.length?'<div class="rc-meta"><strong>Your clients here:</strong> '+myClients.map(c=>esc(c.name)).join(", ")+"</div>":""}
+    <div class="rc-meta"><strong>Local forms:</strong> saved in the Forms tab library (shows automatically for every ${r.id} client)${(DB.rcForms&&DB.rcForms[r.id]&&DB.rcForms[r.id].length)?" — "+DB.rcForms[r.id].length+" saved":""}</div>
+    <label>My process notes for ${r.id} (forms, contacts, orientation dates, quirks)</label>
+    <textarea placeholder="e.g. SDP coordinator: … / uses own spending plan template (get from SDP page) / orientations first Tuesday monthly / revisions go through service coordinator…" onchange="rcNote('${r.id}',this.value)">${esc(DB.rcNotes[r.id]||"")}</textarea>
+    </div></details>`;
+  });
+  el.innerHTML=html;
+}
+function rcNote(id,val){ DB.rcNotes[id]=val; save(); }
+
+/* ================= RESOURCES ================= */
+function renderResources(){
+  const el=document.getElementById("view-resources");
+  el.innerHTML=`<h2>Resources</h2><p class="hint">Key statewide references for the Self-Determination Program.</p>
+  <div class="card"><h3 class="mt0">Official</h3>
+  <p>• <a href="https://www.dds.ca.gov/initiatives/sdp/" target="_blank" rel="noopener">DDS — Self-Determination Program</a> — program home, directives &amp; updates</p>
+  <p>• <a href="https://www.dds.ca.gov/initiatives/sdp/frequently-asked-questions/" target="_blank" rel="noopener">DDS — SDP FAQs</a></p>
+  <p>• <a href="https://www.dds.ca.gov/initiatives/sdp/resources-and-tools/" target="_blank" rel="noopener">DDS — SDP Resources &amp; Tools</a> (service definitions, budget/spending plan tools)</p>
+  <p>• <a href="https://codes.findlaw.com/ca/welfare-and-institutions-code/wic-sect-4685-8/" target="_blank" rel="noopener">WIC § 4685.8</a> — the SDP statute</p></div>
+  <div class="card"><h3 class="mt0">Current service rates (DDS)</h3>
+  <p>• <a href="https://www.dds.ca.gov/rc/vendor-provider/vendorization-process/vendor-rates/" target="_blank" rel="noopener">DDS Reimbursement Rates</a> — the main rates page (rates effective Jan 1, 2026; check here first)</p>
+  <p>• <a href="https://www.dds.ca.gov/rc/vendor-provider/rate-models/" target="_blank" rel="noopener">Complete rate models</a> — detailed rates by service code, summarized per regional center</p>
+  <p>• <a href="https://www.dds.ca.gov/wp-content/uploads/2023/06/SDP-FMS-Monthly-Rates-2.pdf" target="_blank" rel="noopener">SDP FMS monthly rates (PDF)</a> — the flat monthly FMS fees by model &amp; number of services</p>
+  <p>• <a href="https://www.dds.ca.gov/wp-content/uploads/2022/07/Self_Directed_Support_Services_Rates_082022.pdf" target="_blank" rel="noopener">Self-Directed Supported Services rates by RC (PDF)</a> — the code 099 hourly rate for pre-enrollment / General SD Supports work</p>
+  <p>• <a href="https://www.dds.ca.gov/rc/vendor-provider/rate-changes/" target="_blank" rel="noopener">Rate Changes</a> — announcements when rates are updated</p>
+  <p class="muted">Rates change (typically each January) — always confirm against the current schedule before quoting costs in a spending plan.</p></div>
+  <div class="card"><h3 class="mt0">Community</h3>
+  <p>• <a href="https://sdp-resource-center.org" target="_blank" rel="noopener">SDP Resource Center</a> — step-by-step overview &amp; directive library</p>
+  <p>• <a href="https://disabilityvoicesunited.org/interchange/self-determination/" target="_blank" rel="noopener">Disability Voices United — Self-Determination Interchange</a></p>
+  <p>• <a href="https://scdd.ca.gov" target="_blank" rel="noopener">State Council on Developmental Disabilities</a> — statewide SDP advisory committee</p></div>
+  <div class="card"><h3 class="mt0">Independent Facilitator quick reference</h3>
+  <p><strong>Role (WIC 4685.8):</strong> chosen and directed by the participant to help develop the person-centered plan and spending plan, coordinate the IPP meeting, and support implementation. May not also be the participant's FMS or a provider of other paid services to that participant (conflict of interest).</p>
+  <p><strong>IF payment:</strong> pre-enrollment supports are RC-paid outside the budget — Initial PCP up to $1,000 (code 024) and General SD Supports up to 40 hrs at the DDS-set rate (code 099 / 099-PDS, per the July 2024 directive). After enrollment, IF services are paid from the participant's individual budget (WIC 4685.8(c)(2), service code 340) — include the line in the spending plan.</p>
+  <p><strong>FMS models:</strong> Bill Payer / Fiscal Agent (315) · Co-Employer (316) · Sole Employer / Fiscal-Employer Agent (317). Flat monthly fee per the state rate schedule.</p>
+  <p><strong>Spending plan rules:</strong> total ≤ certified budget · every item costed &amp; coded · items must address IPP outcomes, be unavailable from generic services, and be FFP-eligible · attach plan to IPP · distribute funds to last the full year.</p>
+  <p><strong>Watch for 2026:</strong> AB 143 requires DDS to define "cost effective" by directive (due Aug 1, 2026) — spending plans will be reviewed against it. Check DDS Program Updates.</p></div>
+  <div class="card"><h3 class="mt0">Your data</h3>
+  <p class="muted">Everything you enter lives only in this browser (localStorage) — nothing is sent anywhere. Turn on <strong>📁 auto-backup</strong> (header) to save automatically to a folder you designate — e.g. Google Drive for Desktop &gt; IF Clients 2026 — with one subfolder per client (data file + readable budget summary). Works in Chrome/Edge; after reopening the app, one click reconnects the folder. <strong>Backup data / Restore</strong> still work manually anywhere. Client information is sensitive: store backups securely.</p></div>`;
+}
+
+/* ================= INIT ================= */
+renderAll();
+</script>
+<script>
+/* ================= GOALS, ASKS & JUSTIFICATION ================= */
+const LIFE_AREAS = {
+ "Independent living":[
+  {code:"320",ask:"__ hrs/week of community living supports",fn:"provide 1:1 coaching in daily living skills (cooking, budgeting, household management, personal safety) in the home and community",gen:"IHSS covers personal care/domestic tasks performed FOR the person, not skill-building instruction; no generic program teaches these skills at this intensity"},
+  {code:"313",ask:"__ hrs/week homemaker services",fn:"maintain a safe, sanitary home environment the participant cannot maintain independently",gen:"IHSS hours are exhausted/insufficient for this need (attach IHSS NOA)"},
+  {code:"314",ask:"one-time housing access support",fn:"secure and set up accessible housing (applications, deposits coordination, move-in supports)",gen:"no generic housing agency provides individualized disability-related move-in support"}],
+ "Community involvement & relationships":[
+  {code:"331",ask:"__ hrs/week community integration supports",fn:"support participation in community activities, classes, and social groups to build relationships and natural supports",gen:"generic recreation programs do not provide the 1:1 support needed for meaningful access"},
+  {code:"338",ask:"__ round trips/month non-medical transportation",fn:"enable travel to community activities, work, and program sites",gen:"paratransit/public transit is unavailable, insufficient, or the participant cannot use it independently"},
+  {code:"333",ask:"$__ for participant-directed goods/services",fn:"purchase specific goods or services that directly enable this outcome (describe each item)",gen:"item is disability-related and not available through any generic source"}],
+ "Employment & career":[
+  {code:"335",ask:"__ hrs/week employment supports (job coaching)",fn:"develop, place, and coach in competitive integrated employment",gen:"Department of Rehabilitation services were applied for and are unavailable/exhausted/insufficient (attach DOR documentation)"},
+  {code:"339",ask:"__ hrs/week prevocational supports",fn:"build general work skills (attendance, task completion, workplace social skills) preparing for competitive employment",gen:"not available through DOR or school transition programs for this individual"},
+  {code:"334",ask:"course/training fees $__ + __ support hrs",fn:"complete individualized training or education tied to the employment goal",gen:"not covered by financial aid, adult education, or DOR"}],
+ "Education & skills":[
+  {code:"334",ask:"tuition/fees $__ per term",fn:"attend individualized training/education program supporting IPP outcomes",gen:"not available through public education, adult ed, or financial aid"},
+  {code:"336",ask:"device + setup $__, training __ hrs",fn:"use technology to learn, communicate, and increase independence",gen:"not covered by Medi-Cal, school district, or other generic source"}],
+ "Health & wellness":[
+  {code:"375",ask:"__ sessions/month occupational therapy",fn:"maintain/improve functional skills for daily living",gen:"Medi-Cal-covered OT was requested and denied/exhausted (attach denial or EOB)"},
+  {code:"376",ask:"__ sessions/month physical therapy",fn:"maintain mobility and physical functioning",gen:"Medi-Cal-covered PT was requested and denied/exhausted"},
+  {code:"362",ask:"__ consultations/year nutritional consultation",fn:"address disability-related dietary needs",gen:"not covered by Medi-Cal for this purpose"},
+  {code:"370",ask:"__ sessions/month psychology services",fn:"address disability-related behavioral/emotional needs",gen:"Medi-Cal mental health services inaccessible or insufficient for developmental-disability-specific needs"}],
+ "Behavior support":[
+  {code:"364",ask:"__ hrs/month behavioral intervention services",fn:"reduce behaviors that limit community participation via a positive behavior support plan",gen:"Medi-Cal behavioral health was pursued and is unavailable/insufficient (document referral)"},
+  {code:"363",ask:"crisis intervention plan + __ hrs as needed",fn:"stabilize crises and keep the participant in their home/community",gen:"county crisis services are not disability-competent for this need"}],
+ "Communication":[
+  {code:"360",ask:"__ hrs/month communication support",fn:"access effective communication across settings",gen:"not available through school district or Medi-Cal"},
+  {code:"372",ask:"__ sessions/month speech-language services",fn:"improve expressive/receptive communication",gen:"Medi-Cal/school-based speech services denied, exhausted, or unavailable to adults"},
+  {code:"336",ask:"AAC device/apps $__ + training",fn:"use assistive communication technology",gen:"Medi-Cal DME request denied or device type not covered"}],
+ "Safety at home & in community":[
+  {code:"356",ask:"home modification(s) $__ (bids attached)",fn:"make the home physically accessible and safe (ramps, grab bars, widened doors)",gen:"not covered by Medi-Cal HCBS or housing programs; landlord approval obtained"},
+  {code:"358",ask:"PERS unit $__/month",fn:"summon help in emergencies while alone, enabling safe independence",gen:"not a Medi-Cal-covered benefit for this individual"},
+  {code:"365",ask:"equipment/supplies $__ (list attached)",fn:"meet disability-specific medical/safety equipment needs",gen:"Medi-Cal DME request denied or item not covered (attach denial)"}],
+ "Family support & respite":[
+  {code:"310",ask:"__ hrs/month in-home respite",fn:"give the primary caregiver scheduled relief, sustaining the family placement",gen:"no generic respite source exists; IHSS does not provide caregiver relief"},
+  {code:"311",ask:"__ days/quarter out-of-home respite",fn:"provide caregiver relief and the participant a safe out-of-home experience",gen:"not available through any generic program"},
+  {code:"366",ask:"__ hrs training for family",fn:"equip family to support skill development and behavior strategies at home",gen:"not available through insurance or school"}],
+ "Transportation & mobility":[
+  {code:"338",ask:"__ trips/month non-medical transportation",fn:"access work, day services, and community activities",gen:"public/paratransit unavailable or unusable for this individual"},
+  {code:"377",ask:"vehicle modification $__ (bids attached)",fn:"safely transport the participant in the family vehicle",gen:"not covered by Medi-Cal or DOR"}]
+};
+function goalMigrate(c){ if(!c.goals) c.goals=[]; }
+function renderGoals(){
+  const el=document.getElementById("view-goals");
+  let html=`<h2>Goals, Asks &amp; Justification</h2><p class="hint">Turn PCP goals into concrete budget requests: pick a life area, get suggested services with the service code, what to ask for, and ready-to-edit justification language built on the three certification criteria. Track results as goals progress.</p>${pickerHtml("goals")}`;
+  const c=getClient(picked.goals);
+  if(c){
+    goalMigrate(c);
+    html+=`<div class="card"><h3 class="mt0">Add a goal</h3><div class="row">
+    <div style="flex:2"><label>Goal / desired outcome (from the PCP)</label><input id="g_title" placeholder="e.g. Maria wants a part-time job in an animal shelter"></div>
+    <div><label>Life area</label><select id="g_area">${Object.keys(LIFE_AREAS).map(a=>`<option>${a}</option>`).join("")}</select></div>
+    <div><button class="btn" onclick="addGoal('${c.id}')">Add goal</button></div></div></div>`;
+    if(!c.goals.length) html+=`<div class="card muted">No goals yet — add the outcomes from the PCP above.</div>`;
+    c.goals.forEach(g=>{
+      const linked=c.plan.filter(i=>i.goalId===g.id);
+      const spent=linked.reduce((s,i)=>s+spentForItem(c,i.id),0);
+      const asked=linked.reduce((s,i)=>s+(+i.annual||0),0);
+      const sug=LIFE_AREAS[g.area]||[];
+      html+=`<div class="card"><div class="flexbtw"><h3 class="mt0">🎯 ${esc(g.title)}</h3>
+      <span><span class="badge blue">${esc(g.area)}</span>
+      <select style="width:auto;display:inline-block;margin-left:6px" onchange="goalField('${c.id}','${g.id}','status',this.value)">
+      ${["Planned","In progress","Achieved","Paused"].map(s=>`<option ${g.status===s?"selected":""}>${s}</option>`).join("")}</select>
+      <span class="del-x" onclick="delGoal('${c.id}','${g.id}')">✕</span></span></div>`;
+      if(linked.length){
+        html+=`<p class="muted">Tied to budget: ${linked.map(i=>esc(i.code)+" — "+esc(i.desc)).join(" · ")} | requested ${money(asked)}/yr · spent ${money(spent)}</p>`;
+      }
+      html+=`<label>Results so far (what changed for the person — used in reports and renewals)</label>
+      <textarea placeholder="e.g. Volunteering 2 days/week since March; interview scheduled at shelter. Job coach hours were essential." onchange="goalField('${c.id}','${g.id}','result',this.value)">${esc(g.result||"")}</textarea>
+      <details><summary>💡 Suggested services for "${esc(g.area)}" (${sug.length})</summary><div>`;
+      sug.forEach((s,si)=>{
+        const sc=SERVICE_CODES.find(x=>x.code===s.code);
+        html+=`<div class="card" style="background:var(--blue-light)">
+        <strong>${s.code} — ${sc?sc.name:""}</strong> <span class="badge blue">${sc?sc.cat:""}</span>
+        <p class="muted" style="margin:6px 0"><strong>What to ask for:</strong> ${esc(s.ask)}</p>
+        <p class="muted" style="margin:6px 0"><strong>Justification draft:</strong> ${esc(justText(c,g,s))}</p>
+        <div class="row"><div><label>Annual amount ($)</label><input type="number" id="ga_${g.id}_${si}" min="0" step="0.01"></div>
+        <div style="flex:2"><label>Provider / detail (optional)</label><input id="gp_${g.id}_${si}" placeholder="provider name, rate detail"></div>
+        <div><button class="btn small" onclick="addGoalService('${c.id}','${g.id}',${si})">Add to spending plan</button></div></div></div>`;
+      });
+      html+=`</div></details></div>`;
+    });
+    if(c.goals.length) html+=`<button class="btn" onclick="printGoalReport('${c.id}')">🖨 Budget Request &amp; Justification report</button>
+    <button class="btn secondary" onclick="printResultsReport('${c.id}')">🖨 Goal Results report</button>`;
+  }
+  el.innerHTML=html;
+}
+function justText(c,g,s){
+  const sc=SERVICE_CODES.find(x=>x.code===s.code);
+  return `This request directly addresses ${c.name}'s IPP desired outcome: "${g.title}". ${sc?sc.name:"The service"} (code ${s.code}) will ${s.fn}. Generic resources were considered: ${s.gen}. This is an approved SDP service eligible for federal financial participation. Requested: ${s.ask}.`;
+}
+function addGoal(cid){
+  const c=getClient(cid); goalMigrate(c);
+  const t=v("g_title"); if(!t){alert("Describe the goal first.");return;}
+  c.goals.push({id:uid(),title:t,area:v("g_area"),status:"Planned",result:""});
+  save(); renderGoals();
+}
+function delGoal(cid,gid){ const c=getClient(cid); if(confirm("Remove this goal? (Linked budget lines stay.)")){c.goals=c.goals.filter(g=>g.id!==gid); save(); renderGoals();} }
+function goalField(cid,gid,f,val){ const c=getClient(cid); const g=c.goals.find(x=>x.id===gid); g[f]=val; save(); if(f==="status")renderGoals(); }
+function addGoalService(cid,gid,si){
+  const c=getClient(cid); const g=c.goals.find(x=>x.id===gid);
+  const s=LIFE_AREAS[g.area][si]; const sc=SERVICE_CODES.find(x=>x.code===s.code);
+  const amt=+document.getElementById(`ga_${gid}_${si}`).value||0;
+  const prov=document.getElementById(`gp_${gid}_${si}`).value.trim();
+  c.plan.push({id:uid(),code:s.code,cat:sc.cat,desc:(prov||sc.name)+" — goal: "+g.title.slice(0,40),annual:amt,goalId:gid,just:justText(c,g,s)});
+  save(); renderGoals(); renderBudget(); renderDashboard();
+  alert("Added to the spending plan ("+money(amt)+"/yr). Set the exact amount in the Budget tab if needed.");
+}
+function printGoalReport(cid){
+  const c=getClient(cid); goalMigrate(c);
+  let h=`<h1>SDP Budget Request &amp; Justification — ${esc(c.name)}</h1>
+  <p>Prepared ${new Date().toLocaleDateString()} by the Independent Facilitator · Regional center: ${esc(c.rc)} · Plan year ${esc(c.planStart)} to ${esc(c.planEnd)} · Certified budget: ${money(+c.budget)}</p>
+  <p>Each request below is tied to an IPP desired outcome and addresses the certification criteria of WIC §4685.8: it (i) addresses the individual's desired outcomes in the IPP, (ii) is not available from generic services, and (iii) is eligible for federal financial participation.</p>`;
+  c.goals.forEach((g,n)=>{
+    const linked=c.plan.filter(i=>i.goalId===g.id);
+    h+=`<h2>Goal ${n+1}: ${esc(g.title)}</h2><p><em>Life area: ${esc(g.area)} · Status: ${esc(g.status||"Planned")}</em></p>`;
+    if(!linked.length){ h+=`<p>(No budget lines linked yet.)</p>`; return; }
+    h+=`<table><tr><th>Code</th><th>Service</th><th>Annual request</th></tr>`;
+    linked.forEach(i=>h+=`<tr><td>${esc(i.code)}</td><td>${esc(i.desc)}</td><td>${money(+i.annual)}</td></tr>`);
+    h+=`</table>`;
+    linked.forEach(i=>{ if(i.just) h+=`<p style="font-size:12px"><strong>${esc(i.code)} justification:</strong> ${esc(i.just)}</p>`; });
+  });
+  const tot=c.plan.filter(i=>i.goalId).reduce((s,i)=>s+(+i.annual||0),0);
+  h+=`<h2>Total of goal-linked requests: ${money(tot)}</h2>
+  <p style="font-size:11px">Prepared with the participant's direction and consent. Supporting documentation (denials, bids, assessments) available on request.</p>`;
+  doPrint(h);
+}
+function printResultsReport(cid){
+  const c=getClient(cid); goalMigrate(c);
+  let h=`<h1>Goal Results Report — ${esc(c.name)}</h1>
+  <p>Prepared ${new Date().toLocaleDateString()} · Plan year ${esc(c.planStart)} to ${esc(c.planEnd)} · For annual IPP review / renewal</p>
+  <table><tr><th>Goal</th><th>Status</th><th>Services used (codes)</th><th>Requested $</th><th>Spent $</th><th>Results</th></tr>`;
+  c.goals.forEach(g=>{
+    const linked=c.plan.filter(i=>i.goalId===g.id);
+    const asked=linked.reduce((s,i)=>s+(+i.annual||0),0);
+    const spent=linked.reduce((s,i)=>s+spentForItem(c,i.id),0);
+    h+=`<tr><td>${esc(g.title)}</td><td>${esc(g.status||"Planned")}</td><td>${linked.map(i=>esc(i.code)).join(", ")||"—"}</td>
+    <td>${money(asked)}</td><td>${money(spent)}</td><td>${esc(g.result||"—")}</td></tr>`;
+  });
+  h+=`</table><p style="font-size:11px">Use at the annual IPP meeting to show how the budget produced outcomes and to justify renewal or revision of services.</p>`;
+  doPrint(h);
+}
+</script>
+<script>
+/* ================= FMS PORTAL ACCESS & CLIENT UPDATES ================= */
+function fmsCard(c){
+  if(!c.fmsPortal) c.fmsPortal={url:"",user:"",pass:"",day:"",consent:false};
+  const f=c.fmsPortal;
+  return `<div class="card"><h3 class="mt0">FMS portal &amp; monthly check-in</h3>
+  <p class="muted">Keep the client's FMS sign-on here (with their written consent) so statement day is one click. ⚠ Stored unencrypted in this browser only — best practice is asking the FMS to give you your own authorized-user login instead of sharing the client's.</p>
+  <div class="row">
+    <div style="flex:2"><label>FMS portal web address</label><input value="${esc(f.url)}" placeholder="https://portal.yourfms.com" onchange="fmsField('${c.id}','url',this.value)"></div>
+    <div><label>Username</label><input value="${esc(f.user)}" onchange="fmsField('${c.id}','user',this.value)"></div>
+    <div><label>Password</label><input type="password" id="fp_${c.id}" value="${esc(f.pass)}" onchange="fmsField('${c.id}','pass',this.value)">
+      <span class="muted" style="cursor:pointer" onclick="togglePass('${c.id}')">show/hide</span></div>
+    <div><label>Statement day</label><input value="${esc(f.day)}" placeholder="e.g. 5th" onchange="fmsField('${c.id}','day',this.value)"></div>
+  </div>
+  <label style="display:flex;gap:8px;align-items:center;font-weight:400;margin-top:8px">
+    <input type="checkbox" style="width:18px;height:18px" ${f.consent?"checked":""} onchange="fmsField('${c.id}','consent',this.checked)">
+    Client/representative gave written consent for me to access their FMS account
+  </label>
+  ${f.url?`<button class="btn secondary" onclick="window.open('${esc(f.url)}','_blank')">🔗 Open FMS portal</button>`:""}
+  <button class="btn" onclick="emailUpdate('${c.id}')">✉ Email budget update to client</button>
+  <button class="btn secondary" onclick="copyUpdate('${c.id}')">Copy update text</button>
+  <p class="muted" style="margin-top:6px">Monthly routine: open portal → reconcile the statement → log spending above → the app flags over/under pace automatically (Dashboard alerts) → send the update.</p></div>`;
+}
+function fmsField(cid,k,val){ const c=getClient(cid); if(!c.fmsPortal)c.fmsPortal={}; c.fmsPortal[k]=val; save(); if(k==="url"||k==="consent")renderBudget(); }
+function togglePass(cid){ const i=document.getElementById("fp_"+cid); i.type=i.type==="password"?"text":"password"; }
+function updateText(c){
+  const sp=spentTotal(c), rem=c.budget-sp, up=Math.round(utilization(c)), yp=planYearPct(c);
+  let t=`Hi ${c.name.split(" ")[0]},\n\nHere is your SDP budget update as of ${new Date().toLocaleDateString()}:\n\n`;
+  t+=`• Annual budget: ${money(+c.budget)}\n• Spent to date: ${money(sp)} (${up}% of budget${yp!==null?", at "+yp+"% of the plan year":""})\n• Remaining: ${money(rem)}\n`;
+  const py=planYearInfo(c);
+  if(py&&!py.over) t+=`• Budget effective: ${fmtDate(py.start)} to ${fmtDate(py.end)} — ${py.remaining} month${py.remaining===1?"":"s"} left\n• That's about ${money(py.remaining>0?rem/py.remaining:0)} available per remaining month\n`;
+  t+=`\nBy service:\n`;
+  c.plan.forEach(i=>{ const s2=spentForItem(c,i.id); const pm=perMonthLeft(c,(+i.annual||0)-s2);
+    t+=`• ${i.code} ${i.desc}: ${money(s2)} of ${money(+i.annual)} — ${money((+i.annual||0)-s2)} left${pm?", ≈"+pm:""}\n`; });
+  const al=clientAlerts(c);
+  if(al.length){ t+=`\nThings to watch:\n`; al.forEach(a=>t+=`• ${a.msg}\n`); }
+  else t+=`\nYou are on track — nice pacing!\n`;
+  t+=`\nQuestions? Just reply.\n\n— Your Independent Facilitator`;
+  return t;
+}
+function emailUpdate(cid){
+  const c=getClient(cid);
+  if(!c.email){ alert("Add the client's email on the Clients tab first."); return; }
+  const cc=[c.c2email,c.c3email].filter(Boolean).map(encodeURIComponent).join(",");
+  location.href="mailto:"+encodeURIComponent(c.email)+(cc?"?cc="+cc+"&subject=":"?subject=")+encodeURIComponent("Your SDP budget update — "+new Date().toLocaleDateString())+"&body="+encodeURIComponent(updateText(c));
+}
+function copyUpdate(cid){
+  const c=getClient(cid);
+  navigator.clipboard.writeText(updateText(c)).then(()=>alert("Update text copied — paste into email or text message."));
+}
+</script>
+<script>
+/* ================= AUTO-BACKUP TO DESIGNATED FOLDER ================= */
+/* Uses the File System Access API (Chrome/Edge). Pick a folder once — e.g. your
+   Google Drive for Desktop folder > "IF Clients 2026" — and every change is saved
+   automatically to <folder>/<Client Name>/ . Google Drive then syncs it to the cloud. */
+let backupDir = null, backupTimer = null;
+
+function idb(){ return new Promise((res,rej)=>{ const r=indexedDB.open("ifsdp_fs",1);
+  r.onupgradeneeded=()=>r.result.createObjectStore("h");
+  r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+async function idbSet(k,val){ const d=await idb(); return new Promise((res,rej)=>{ const t=d.transaction("h","readwrite"); t.objectStore("h").put(val,k); t.oncomplete=res; t.onerror=()=>rej(t.error); }); }
+async function idbGet(k){ const d=await idb(); return new Promise((res,rej)=>{ const t=d.transaction("h","readonly"); const g=t.objectStore("h").get(k); g.onsuccess=()=>res(g.result); g.onerror=()=>rej(g.error); }); }
+
+function bkStatus(msg,ok){ const el=document.getElementById("bkStatus"); if(el){ el.textContent=msg; el.style.color=ok?"#b8e6b8":"#ffd9a0"; } }
+function sanitizeName(n){ return (n||"client").replace(/[\\/:*?"<>|]/g,"-").trim(); }
+
+async function setupBackup(){
+  if(!window.showDirectoryPicker){ alert("Automatic folder backup needs Chrome or Edge. In this browser, please keep using the Backup data button."); return; }
+  try{
+    backupDir = await showDirectoryPicker({mode:"readwrite"});
+    await idbSet("dir", backupDir);
+    await writeBackup();
+    alert("Auto-backup is on. Everything will now save to \""+backupDir.name+"\" — each client gets their own folder. If this folder is inside Google Drive for Desktop, it syncs to the cloud automatically.");
+    renderBackupBtn();
+  }catch(e){ if(e.name!=="AbortError") alert("Could not set up the folder: "+e.message); }
+}
+async function reconnectBackup(){
+  const h = await idbGet("dir");
+  if(!h){ setupBackup(); return; }
+  const p = await h.requestPermission({mode:"readwrite"});
+  if(p==="granted"){ backupDir=h; renderBackupBtn(); writeBackup(); }
+}
+function scheduleBackup(){
+  if(!backupDir) return;
+  clearTimeout(backupTimer);
+  backupTimer=setTimeout(writeBackup,1500);
+}
+async function writeBackup(){
+  if(!backupDir) return;
+  try{
+    /* master backup of everything */
+    await writeFile(backupDir,"ALL-CLIENTS-master-backup.json",JSON.stringify(DB,null,2));
+    /* one folder per client: data + readable summary */
+    for(const c of DB.clients){
+      const folder = await backupDir.getDirectoryHandle(sanitizeName(c.name),{create:true});
+      await writeFile(folder, sanitizeName(c.name)+" - SDP data.json", JSON.stringify(c,null,2));
+      await writeFile(folder, sanitizeName(c.name)+" - budget summary.txt", updateText(c));
+    }
+    bkStatus("✓ backed up "+new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"}),true);
+  }catch(e){
+    bkStatus("⚠ backup failed — click to reconnect",false);
+    console.warn("backup:",e);
+  }
+}
+async function writeFile(dirHandle,name,content){
+  const fh = await dirHandle.getFileHandle(name,{create:true});
+  const w = await fh.createWritable();
+  await w.write(content); await w.close();
+}
+function renderBackupBtn(){
+  const b=document.getElementById("bkBtn"); if(!b) return;
+  b.innerHTML = backupDir ? "📁 Auto-backup: ON ("+esc(backupDir.name)+")" : "📁 Set up auto-backup";
+}
+async function initBackup(){
+  if(!window.indexedDB || !window.showDirectoryPicker){ bkStatus("auto-backup needs Chrome/Edge",false); return; }
+  try{
+    const h = await idbGet("dir");
+    if(!h){ bkStatus("auto-backup off",false); return; }
+    const p = await h.queryPermission({mode:"readwrite"});
+    if(p==="granted"){ backupDir=h; renderBackupBtn(); bkStatus("auto-backup ready",true); writeBackup(); }
+    else bkStatus("click Auto-backup to reconnect \""+h.name+"\"",false);
+  }catch(e){ bkStatus("auto-backup off",false); }
+}
+initBackup();
+</script>
+<script>
+/* ================= FORMS PAGE (fillable, saved per client, printable) ================= */
+const FORM_DEFS = [
+ {id:"agreement", name:"IF Services Agreement", icon:"📝",
+  blurb:"Role, scope options, hours formula, compensation, signatures.",
+  sections:[
+   {h:"Parties", fields:[
+    {k:"if_name",l:"Independent Facilitator",pre:()=>""},{k:"if_contact",l:"IF phone / email"},
+    {k:"participant",l:"Participant",pre:c=>c.name},{k:"rep",l:"Authorized representative (if any)"},
+    {k:"rc",l:"Regional center / coordinator",pre:c=>(c.rc?c.rc+" — ":"")+(c.coordinator||"")},
+    {k:"eff",l:"Effective date",t:"date"},{k:"end",l:"End date",t:"date",pre:c=>c.planEnd}]},
+   {h:"Role & conflict-of-interest attestation", note:"Per WIC 4685.8(c)(2): selected and directed by the participant; assists with budget decisions, locating/coordinating supports, person-centered planning, and obtaining services. The IF attests they provide no other IPP services to this participant and are not employed by any provider serving them.", fields:[
+    {k:"coi",l:"IF attests to the conflict-of-interest rules above",t:"check"},
+    {k:"training",l:"IF has completed self-determination & PCP training (at own cost)",t:"check"}]},
+   {h:"Phase 1 — Pre-enrollment scope (RC-paid, outside budget)", note:"Initial PCP paid up to $1,000 (code 024 or vendored provider); General SD Supports up to 40 hrs at DDS-set rate (code 099 / 099-PDS). Exceptions case-by-case.", fields:[
+    {k:"p1_pcp",l:"Initial Person-Centered Plan development",t:"check"},
+    {k:"p1_sd",l:"General Self-Directed Supports (coaching to enrollment)",t:"check"},
+    {k:"p1_hours",l:"Estimated General SD hours (max 40)"},
+    {k:"p1_prop",l:"Written proposal of services & hours given to IPP team",t:"check"}]},
+   {h:"Phase 2 — Ongoing scope (from individual budget, code 340)", fields:[
+    {k:"tier",l:"Service tier",t:"select",opts:["Tier A — Essentials (≈20–25 hrs/yr)","Tier B — Standard (≈35–45 hrs/yr)","Tier C — Comprehensive (≈60–75 hrs/yr)","Hourly / à la carte"]},
+    {k:"hours_formula",l:"Hours worksheet (monthly base ×12 + quarterly + renewal prep + revisions + startup, × complexity factor)",t:"area"},
+    {k:"annual_hours",l:"Total annual hours"},{k:"rate",l:"Hourly rate ($)"},
+    {k:"annual_amt",l:"Annual amount for spending plan line 340 ($)"}]},
+   {h:"Terms & signatures", note:"Invoices include rate, dates, task descriptions, time & prorated cost. Either party may end with written notice; participant may change IFs at any time. Confidentiality applies; IF is an independent contractor.", fields:[
+    {k:"notice",l:"Days written notice to terminate"},
+    {k:"sig_p",l:"Participant signature & date"},{k:"sig_r",l:"Representative signature & date"},{k:"sig_if",l:"IF signature & date"}]}]},
+ {id:"proposal", name:"Pre-Enrollment Proposal & Invoice", icon:"📨",
+  blurb:"Written proposal for the IPP team + a directive-compliant invoice.",
+  sections:[
+   {h:"Proposal to the IPP team", fields:[
+    {k:"pot",l:"Potential SDP participant",pre:c=>c.name},{k:"prov",l:"Provider (IF)"},
+    {k:"rc",l:"Regional center",pre:c=>c.rc},{k:"date",l:"Date",t:"date"},
+    {k:"orA",l:"SCDD Orientation Part A completed (certificate attached)",t:"check"},
+    {k:"orB",l:"SCDD Orientation Part B completed (certificate attached)",t:"check"},
+    {k:"pcp_hrs",l:"Initial PCP — estimated hours (paid up to $1,000)"},
+    {k:"sd_hrs",l:"General SD Supports — estimated hours (max 40)"},
+    {k:"sd_desc",l:"Description of proposed transition services",t:"area"},
+    {k:"exc",l:"Exception request & basis (limited natural supports / language / higher needs)",t:"area"},
+    {k:"rate",l:"Hourly rate (DDS rate schedule)"}]},
+   {h:"Invoice", note:"Submit to the RC (code 024) or FMS (code 099-PDS). No additional charge may be collected from the individual or family.", fields:[
+    {k:"inv_no",l:"Invoice #"},{k:"period",l:"Billing period"},{k:"payee",l:"Provider / payee"}],
+    rows:{k:"inv_rows",cols:["Date","Service/task description","Time (hrs)","Prorated cost ($)"]}}]},
+ {id:"intake", name:"New Client Intake Checklist", icon:"✅",
+  blurb:"Everything to collect and do from first contact to first 90 days.",
+  sections:[
+   {h:"Information to collect", fields:["Current IPP copy received","12-month POS expenditure history received","Contacts: family, providers, service coordinator","Communication preferences & language / interpreter needs","Generic services documented (IHSS, Medi-Cal, school, SSI)","Signed IF agreement & consent to share information"].map((x,i)=>({k:"a"+i,l:x,t:"check"}))},
+   {h:"Orientation (from Apr 1, 2026: SCDD only, 2 parts)", fields:["Registered at scdd.ca.gov/sdp-orientation","Part A done — certificate received","Part B done — certificate received","Certificates sent to service coordinator","SC provided next-steps packet"].map((x,i)=>({k:"b"+i,l:x,t:"check"}))},
+   {h:"Pre-enrollment supports (RC-paid)", fields:["Initial PCP requested (≤$1,000, code 024)","General SD Supports authorized (≤40 hrs, code 099)","Written proposal to IPP team","Exception hours requested if needed"].map((x,i)=>({k:"c"+i,l:x,t:"check"}))},
+   {h:"Enrollment package", fields:["PCP written & delivered","Budget determined & certified","Spending plan drafted (within budget, coded, costed, FMS line)","FMS provider & model chosen","Compliance check passed","Plan certified & attached to IPP","Start date set — no service gaps"].map((x,i)=>({k:"d"+i,l:x,t:"check"}))},
+   {h:"First 90 days", fields:["Workers/vendors onboarded with FMS","First FMS statement reconciled","First monthly update sent","Code 340 billing running correctly"].map((x,i)=>({k:"e"+i,l:x,t:"check"}))}]},
+ {id:"consent", name:"FMS Access Consent", icon:"🔐",
+  blurb:"Written consent for the IF to access the client's FMS account for budget monitoring.",
+  sections:[
+   {h:"Consent", note:"Keep a signed copy; best practice is still requesting your own authorized-user login from the FMS.", fields:[
+    {k:"participant",l:"Participant",pre:c=>c.name},{k:"fms",l:"FMS provider",pre:c=>c.fms},
+    {k:"scope",l:"Access granted for (e.g. viewing statements & spending reports only)",t:"area",pre:()=>"Viewing monthly statements and spending reports for budget monitoring and client updates. No changes to services, workers, or payments."},
+    {k:"start",l:"Consent effective date",t:"date"},
+    {k:"revoke",l:"I understand I can revoke this consent at any time in writing",t:"check"},
+    {k:"sig_p",l:"Participant/representative signature & date"},{k:"sig_if",l:"IF signature & date"}]}]}
+];
+function formStore(c,fid){ if(!c.forms)c.forms={}; if(!c.forms[fid])c.forms[fid]={}; return c.forms[fid]; }
+function fval(c,fid,f){ const s=formStore(c,fid); if(s[f.k]!==undefined) return s[f.k]; return f.pre?(f.pre(c)||""):""; }
+function renderForms(){
+  const el=document.getElementById("view-forms");
+  let html=`<h2>Forms</h2><p class="hint">Fill forms right here — they prefill from the client's record, save automatically (and into auto-backup), and print cleanly for signatures. Word versions: <a href="IF-Services-Agreement.docx">agreement</a> · <a href="Pre-Enrollment-Proposal-and-Invoice.docx">proposal/invoice</a> · <a href="Monthly-Budget-Update-Letter.docx">update letter</a> · <a href="New-Client-Intake-Checklist.docx">intake</a> · <a href="Person-Centered-Plan-Template.docx">PCP</a> · <a href="IF-Hours-Budget-Calculator.xlsx">hours calculator</a> (keep these files in the same folder as the app).</p>${pickerHtml("forms")}`;
+  const c=getClient(picked.forms);
+  if(c){
+    html+=rcFormsCard(c);
+    FORM_DEFS.forEach(F=>{
+      html+=`<details><summary>${F.icon} ${F.name} <span class="muted" style="font-weight:400">— ${F.blurb}</span></summary><div>`;
+      F.sections.forEach(S=>{
+        html+=`<h3>${S.h}</h3>`;
+        if(S.note) html+=`<p class="muted" style="font-size:12px">${S.note}</p>`;
+        S.fields.forEach(f=>{
+          const val=fval(c,F.id,f), oc=`formField('${c.id}','${F.id}','${f.k}',this)`;
+          if(f.t==="check") html+=`<label style="display:flex;gap:8px;align-items:center;font-weight:400;margin:6px 0"><input type="checkbox" style="width:18px;height:18px;accent-color:var(--green)" ${val?"checked":""} onchange="${oc}"> ${f.l}</label>`;
+          else if(f.t==="area") html+=`<label>${f.l}</label><textarea onchange="${oc}">${esc(val)}</textarea>`;
+          else if(f.t==="select") html+=`<label>${f.l}</label><select onchange="${oc}"><option value=""></option>${f.opts.map(o=>`<option ${val===o?"selected":""}>${o}</option>`).join("")}</select>`;
+          else html+=`<label>${f.l}</label><input type="${f.t==="date"?"date":"text"}" value="${esc(val)}" onchange="${oc}">`;
+        });
+        if(S.rows){
+          const rows=formStore(c,F.id)[S.rows.k]||[];
+          html+=`<table><tr>${S.rows.cols.map(x=>`<th>${x}</th>`).join("")}<th></th></tr>`;
+          rows.forEach((r,ri)=>{
+            html+=`<tr>${S.rows.cols.map((x,ci)=>`<td><input value="${esc(r[ci]||"")}" onchange="formRow('${c.id}','${F.id}','${S.rows.k}',${ri},${ci},this.value)"></td>`).join("")}<td><span class="del-x" onclick="delFormRow('${c.id}','${F.id}','${S.rows.k}',${ri})">✕</span></td></tr>`;
+          });
+          const th=rows.reduce((s,r)=>s+(+r[2]||0),0), tc=rows.reduce((s,r)=>s+(+r[3]||0),0);
+          html+=`<tr><td><strong>Totals</strong></td><td></td><td><strong>${th.toFixed(1)} hrs</strong></td><td><strong>${money(tc)}</strong></td><td></td></tr></table>
+          <button class="btn small secondary" onclick="addFormRow('${c.id}','${F.id}','${S.rows.k}',${S.rows.cols.length})">+ Add line</button>`;
+        }
+      });
+      html+=`<div style="margin-top:10px"><button class="btn" onclick="printForm('${c.id}','${F.id}')">🖨 Print ${F.name}</button> <button class="btn secondary" onclick="saveFormToClient('${c.id}','${F.id}')">💾 Save to client file</button></div></div></details>`;
+    });
+  }
+  el.innerHTML=html;
+}
+function formField(cid,fid,k,input){ const c=getClient(cid); formStore(c,fid)[k]=(input.type==="checkbox")?input.checked:input.value; save(); }
+function addFormRow(cid,fid,k,n){ const c=getClient(cid); const s=formStore(c,fid); if(!s[k])s[k]=[]; s[k].push(Array(n).fill("")); save(); renderForms(); }
+function delFormRow(cid,fid,k,ri){ const c=getClient(cid); formStore(c,fid)[k].splice(ri,1); save(); renderForms(); }
+function formRow(cid,fid,k,ri,ci,val){ const c=getClient(cid); formStore(c,fid)[k][ri][ci]=val; save(); }
+function printForm(cid,fid){
+  const c=getClient(cid); const F=FORM_DEFS.find(x=>x.id===fid);
+  doPrint(formHtml(c,F));
+}
+async function saveFormToClient(cid,fid){
+  const c=getClient(cid); const F=FORM_DEFS.find(x=>x.id===fid);
+  if(!backupDir){ alert("Connect 📁 auto-backup (header) first — saved forms go into the client's Documents folder."); return; }
+  const body=formHtml(c,F);
+  const doc='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+F.name+' — '+esc(c.name)+'</title><style>body{font-family:Arial,sans-serif;max-width:800px;margin:30px auto;padding:0 20px;color:#1f2937}h1{font-size:20px}h2{font-size:15px;border-bottom:1px solid #999;padding-bottom:3px;margin-top:18px}table{width:100%;border-collapse:collapse;font-size:13px}td,th{border:1px solid #bbb;padding:5px;text-align:left}p{margin:6px 0;font-size:13.5px}</style></head><body>'+body+'</body></html>';
+  const fname=F.name.replace(/[\\/:*?"<>|]/g,"-")+" - "+today()+".html";
+  try{
+    const folder=await backupDir.getDirectoryHandle(sanitizeName(c.name),{create:true});
+    const docs=await folder.getDirectoryHandle("Documents",{create:true});
+    const fh2=await docs.getFileHandle(fname,{create:true});
+    const w=await fh2.createWritable(); await w.write(doc); await w.close();
+    const d=docStore(c);
+    d.other=d.other.filter(o=>o.file!==fname);
+    d.other.push({date:today(),cat:"Completed form",note:F.name,file:fname,stored:true});
+    save();
+    alert("Saved \""+fname+"\" to "+c.name+"'s Documents folder — it's also listed in the Documents tab. Open it in any browser; print to PDF from there if needed.");
+  }catch(e){ alert("Could not save: "+e.message); }
+}
+function formHtml(c,F){
+  let h=`<h1>${F.name}</h1><p>${esc(c.name)} · Regional center: ${esc(c.rc||"—")} · Prepared ${new Date().toLocaleDateString()}</p>`;
+  F.sections.forEach(S=>{
+    h+=`<h2>${S.h}</h2>`;
+    if(S.note) h+=`<p style="font-size:10.5px;font-style:italic">${S.note}</p>`;
+    S.fields.forEach(f=>{
+      const val=fval(c,F.id,f);
+      if(f.t==="check") h+=`<p>${val?"☑":"☐"} ${f.l}</p>`;
+      else h+=`<p><strong>${f.l}:</strong> ${esc(val)||"________________________"}</p>`;
+    });
+    if(S.rows){
+      const rows=formStore(c,F.id)[S.rows.k]||[];
+      h+=`<table><tr>${S.rows.cols.map(x=>`<th>${x}</th>`).join("")}</tr>`;
+      (rows.length?rows:[["","","",""],["","","",""],["","","",""]]).forEach(r=>h+=`<tr>${S.rows.cols.map((x,ci)=>`<td>${esc(r[ci]||"")}</td>`).join("")}</tr>`);
+      const th=rows.reduce((s,r)=>s+(+r[2]||0),0), tc=rows.reduce((s,r)=>s+(+r[3]||0),0);
+      h+=`<tr><td><strong>Totals</strong></td><td></td><td><strong>${th.toFixed(1)} hrs</strong></td><td><strong>${money(tc)}</strong></td></tr></table>`;
+    }
+  });
+  h+=`<p style="margin-top:24px">Signature: ______________________________ Date: ______________</p>`;
+  return h;
+}
+</script>
+<script>
+/* ================= SUPPORTING DOCUMENTS ================= */
+const REQUIRED_DOCS = [
+ {k:"if_agreement",l:"Signed IF Services Agreement",phase:"Intake"},
+ {k:"consent_share",l:"Consent to share information",phase:"Intake"},
+ {k:"fms_consent",l:"Signed FMS access consent (if using client's login)",phase:"Intake",opt:true},
+ {k:"orient_a",l:"SCDD Orientation Part A certificate",phase:"Orientation"},
+ {k:"orient_b",l:"SCDD Orientation Part B certificate",phase:"Orientation"},
+ {k:"ipp",l:"Current IPP (from service coordinator)",phase:"Planning"},
+ {k:"pos_history",l:"12-month POS expenditure history",phase:"Planning"},
+ {k:"pcp_signed",l:"PCP — final/signed (slides or document)",phase:"Planning"},
+ {k:"budget_cert",l:"Certified individual budget (signed)",phase:"Enrollment"},
+ {k:"plan_cert",l:"Approved/certified spending plan",phase:"Enrollment"},
+ {k:"fms_agreement",l:"FMS enrollment/agreement confirmation",phase:"Enrollment"},
+ {k:"fms_statements",l:"FMS monthly statements (ongoing)",phase:"Ongoing"}
+];
+function docStore(c){ if(!c.docs) c.docs={req:{},other:[]}; if(!c.docs.req)c.docs.req={}; if(!c.docs.other)c.docs.other=[]; return c.docs; }
+function missingDocs(c){
+  const d=docStore(c);
+  return REQUIRED_DOCS.filter(r=>!r.opt && (!d.req[r.k] || d.req[r.k].status!=="Received")).map(r=>r.l);
+}
+function renderDocs(){
+  const el=document.getElementById("view-docs");
+  let html=`<h2>Supporting Documents</h2><p class="hint">Track every document you need per client — and get reminded of what's missing (Dashboard shows alerts). Uploaded files are stored in the client's auto-backup folder under <strong>Documents</strong>; without a backup folder connected you can still track status.</p>${pickerHtml("docs")}`;
+  const c=getClient(picked.docs);
+  if(c){
+    const d=docStore(c);
+    const miss=missingDocs(c);
+    html+= miss.length
+      ? `<div class="alert amber"><strong>${miss.length} required document${miss.length>1?"s":""} still needed:</strong> ${miss.join(", ")}.</div>`
+      : `<div class="alert green">✔ All required documents received.</div>`;
+    if(!backupDir) html+=`<div class="alert blue">Connect 📁 auto-backup (header) to store uploaded files with the client's records. Until then, uploads are tracked but files aren't saved.</div>`;
+    let phase="";
+    html+=`<div class="card"><h3 class="mt0">Required documents checklist</h3><table><tr><th>Document</th><th>Status</th><th>Date</th><th>File</th><th>Note</th></tr>`;
+    REQUIRED_DOCS.forEach(r=>{
+      if(r.phase!==phase){ phase=r.phase; html+=`<tr><td colspan="5" style="background:var(--blue-light);font-weight:600">${phase}</td></tr>`; }
+      const e=d.req[r.k]||{};
+      const st=e.status||"Needed";
+      const badge=st==="Received"?"green":(st==="Requested"?"amber":"red");
+      html+=`<tr><td>${r.l}${r.opt?' <span class="muted">(if applicable)</span>':''}</td>
+      <td><select style="width:auto" onchange="reqDocStatus('${c.id}','${r.k}',this.value)">${["Needed","Requested","Received"].map(s=>`<option ${st===s?"selected":""}>${s}</option>`).join("")}</select> <span class="badge ${badge}">${st}</span></td>
+      <td><input type="date" style="width:140px" value="${esc(e.date||"")}" onchange="reqDocField('${c.id}','${r.k}','date',this.value)"></td>
+      <td>${e.file?`<a href="#" onclick="openDoc('${c.id}','${esc(e.file)}');return false">📄 ${esc(e.file)}</a>`:`<input type="file" style="width:180px" onchange="uploadDoc('${c.id}','${r.k}',this)">`}</td>
+      <td><input value="${esc(e.note||"")}" placeholder="e.g. asked SC 6/12" onchange="reqDocField('${c.id}','${r.k}','note',this.value)"></td></tr>`;
+    });
+    html+=`</table></div>`;
+    html+=`<div class="card"><h3 class="mt0">Other documents (anything from the client or regional center)</h3>
+    <div class="row"><div><label>Category</label><select id="od_cat">${["PCP slides/materials","IPP report","RC correspondence","Assessment","Denial letter (generic services)","Bid/quote","Invoice/receipt","Other"].map(x=>`<option>${x}</option>`).join("")}</select></div>
+    <div style="flex:2"><label>Note</label><input id="od_note" placeholder="what is it / who sent it"></div>
+    <div><label>File</label><input type="file" id="od_file"></div>
+    <div><button class="btn" onclick="addOtherDoc('${c.id}')">Add</button></div></div>
+    <table><tr><th>Date</th><th>Category</th><th>File</th><th>Note</th><th></th></tr>`;
+    d.other.forEach((o,i)=>{
+      html+=`<tr><td>${esc(o.date)}</td><td>${esc(o.cat)}</td>
+      <td>${o.stored?`<a href="#" onclick="openDoc('${c.id}','${esc(o.file)}');return false">📄 ${esc(o.file)}</a>`:esc(o.file||"(not stored — no backup folder)")}</td>
+      <td>${esc(o.note)}</td><td><span class="del-x" onclick="delOtherDoc('${c.id}',${i})">✕</span></td></tr>`;
+    });
+    if(!d.other.length) html+=`<tr><td colspan="5" class="muted">Nothing added yet.</td></tr>`;
+    html+=`</table></div>`;
+  }
+  el.innerHTML=html;
+}
+function reqDocStatus(cid,k,val){ const c=getClient(cid); const d=docStore(c); if(!d.req[k])d.req[k]={}; d.req[k].status=val; if(val==="Received"&&!d.req[k].date)d.req[k].date=today(); save(); renderDocs(); renderDashboard(); }
+function reqDocField(cid,k,f,val){ const c=getClient(cid); const d=docStore(c); if(!d.req[k])d.req[k]={}; d.req[k][f]=val; save(); }
+async function saveDocFile(c,file,prefix){
+  if(!backupDir) return null;
+  const safe=(prefix?prefix+" - ":"")+file.name.replace(/[\\/:*?"<>|]/g,"-");
+  const folder=await backupDir.getDirectoryHandle(sanitizeName(c.name),{create:true});
+  const docs=await folder.getDirectoryHandle("Documents",{create:true});
+  const fh=await docs.getFileHandle(safe,{create:true});
+  const w=await fh.createWritable(); await w.write(file); await w.close();
+  return safe;
+}
+async function uploadDoc(cid,k,input){
+  const c=getClient(cid); const file=input.files[0]; if(!file) return;
+  const d=docStore(c); if(!d.req[k])d.req[k]={};
+  try{
+    const stored=await saveDocFile(c,file,REQUIRED_DOCS.find(r=>r.k===k).l.slice(0,30));
+    d.req[k].file=stored||file.name; d.req[k].storedOk=!!stored;
+    d.req[k].status="Received"; d.req[k].date=today();
+    if(!stored) alert("Marked as received. To store the file itself, connect 📁 auto-backup first, then upload again.");
+  }catch(e){ alert("Could not save the file: "+e.message); }
+  save(); renderDocs(); renderDashboard();
+}
+async function addOtherDoc(cid){
+  const c=getClient(cid); const d=docStore(c);
+  const input=document.getElementById("od_file"); const file=input.files[0];
+  const cat=v("od_cat"), note=v("od_note");
+  if(!file&&!note){ alert("Add a file or at least a note."); return; }
+  let stored=null;
+  if(file){ try{ stored=await saveDocFile(c,file,cat.slice(0,20)); }catch(e){ alert("Could not save the file: "+e.message);} }
+  d.other.push({date:today(),cat,note,file:stored||(file?file.name:""),stored:!!stored});
+  save(); renderDocs();
+}
+function delOtherDoc(cid,i){ const c=getClient(cid); if(confirm("Remove this document entry? (The file stays in the backup folder.)")){ docStore(c).other.splice(i,1); save(); renderDocs(); } }
+async function openDoc(cid,name){
+  const c=getClient(cid);
+  if(!backupDir){ alert("Connect 📁 auto-backup to open stored files."); return; }
+  try{
+    const folder=await backupDir.getDirectoryHandle(sanitizeName(c.name));
+    const docs=await folder.getDirectoryHandle("Documents");
+    const fh=await docs.getFileHandle(name);
+    const f=await fh.getFile();
+    window.open(URL.createObjectURL(f),"_blank");
+  }catch(e){ alert("Could not open "+name+" — it may have been moved or renamed in the folder."); }
+}
+</script>
+<script>
+/* ================= IPP → PCP COORDINATION ================= */
+const IPP_KEYS = {
+ about:      ["strength","likes","admire","enjoys being","personality","background","lives with","diagnos"],
+ importantTo:["important to","prefers","preference","enjoys","interest","likes to","chooses","favorite","hobb"],
+ importantFor:["health","safety","medical","medication","risk","supervision","allerg","seizure","diet","mobility"],
+ communication:["communicat","speech","language","verbal","nonverbal","sign language","device","gesture","express"],
+ goals:      ["goal","outcome","objective","desired","would like to","wants to","will increase","will improve","will participate"],
+ supports:   ["service","support","provider","respite","vendor","hours per","units","authorized","funded","program"],
+ team:       ["mother","father","parent","sister","brother","family","circle of support","coordinator","conservator","guardian"],
+ action:     ["responsible","by when","timeline","follow up","next steps","review date","target date"]
+};
+const IPP_CACHE = {};
+function ippExcerpts(c){
+  if(!c.pcp._ipptext) return {};
+  if(IPP_CACHE[c.id] && IPP_CACHE[c.id].src===c.pcp._ipptext) return IPP_CACHE[c.id].map;
+  const paras = c.pcp._ipptext.replace(/\r/g,"").split(/\n\s*\n|(?<=[.!?])\s{2,}|\n(?=[A-Z0-9•\-])/)
+    .map(x=>x.replace(/\s+/g," ").trim()).filter(x=>x.length>40 && x.length<600);
+  const map={};
+  Object.keys(IPP_KEYS).forEach(k=>{
+    const scored=[];
+    paras.forEach(p=>{
+      const lc=p.toLowerCase();
+      const score=IPP_KEYS[k].reduce((s,kw)=>s+(lc.includes(kw)?1:0),0);
+      if(score>0) scored.push({p,score});
+    });
+    scored.sort((a,b)=>b.score-a.score);
+    map[k]=scored.slice(0,5).map(x=>x.p);
+  });
+  IPP_CACHE[c.id]={src:c.pcp._ipptext,map};
+  return map;
+}
+function ippPanel(c){
+  const has=!!c.pcp._ipptext;
+  let h=`<div class="card" style="background:var(--blue-light)"><h3 class="mt0">📄 IPP report — feed it into this PCP</h3>`;
+  if(has){
+    h+=`<p class="muted">Loaded: <strong>${esc(c.pcp._ippname||"IPP text")}</strong> (${Math.round(c.pcp._ipptext.length/1000)}k characters, added ${esc(c.pcp._ippdate||"")}). Matching passages appear under each section below — click <em>Insert</em> to pull them in, then edit into person-centered language.</p>
+    <button class="btn small secondary" onclick="clearIpp('${c.id}')">Remove IPP text</button>
+    <div class="alert blue" style="margin-top:10px">💡 <strong>Want a deeper analysis?</strong> The matching below is keyword-based. For real understanding — themes, gaps, unmet needs, spending plan ideas — upload the IPP to <strong>Claude</strong> and ask for a PCP-prep summary, then paste it here. <button class="btn small secondary" onclick="copyClaudePrompt('${c.id}')">Copy a ready-made prompt for Claude</button></div>`;
+  } else {
+    h+=`<p class="muted">Upload the IPP as a <strong>PDF or .txt</strong> (for Word files: use File → Save As → PDF, or copy-paste below). The app scans it and lines up relevant passages next to each PCP section. Scanned/image-only PDFs can't be read — paste the text instead.</p>
+    <div class="row"><div><label>Upload IPP (PDF or .txt)</label><input type="file" accept=".pdf,.txt" onchange="ippFile('${c.id}',this)"></div></div>
+    <label>…or paste IPP text</label><textarea id="ipp_paste" placeholder="paste the IPP report text here"></textarea>
+    <button class="btn small" onclick="ippPasteSave('${c.id}')">Use pasted text</button>
+    <div class="alert blue" style="margin-top:10px">💡 <strong>Tip:</strong> for the deepest read of an IPP, upload it to <strong>Claude</strong> (the assistant that built this app) and ask for a PCP-prep analysis — it understands the content, not just keywords. Then paste Claude's summary into the sections below. <button class="btn small secondary" onclick="copyClaudePrompt('${c.id}')">Copy a ready-made prompt for Claude</button></div>`;
+  }
+  return h+`</div>`;
+}
+function ippHints(c,s){
+  const map=ippExcerpts(c);
+  const ex=map[s.k]||[];
+  if(!ex.length) return "";
+  let h=`<details style="margin:-6px 0 10px;background:var(--blue-light)"><summary style="font-size:12.5px">📄 From the IPP — ${ex.length} matching passage${ex.length>1?"s":""}</summary><div>`;
+  ex.forEach((p,i)=>{
+    h+=`<p style="font-size:12.5px;margin:6px 0"><button class="btn small secondary" onclick="ippInsert('${c.id}','${s.k}',${i})">Insert ⤵</button> ${esc(p)}</p>`;
+  });
+  return h+`</div></details>`;
+}
+function ippInsert(cid,k,i){
+  const c=getClient(cid);
+  const ex=(ippExcerpts(c)[k]||[])[i]; if(!ex) return;
+  c.pcp[k]=(c.pcp[k]?c.pcp[k]+"\n\n":"")+"[From IPP] "+ex;
+  save(); renderPCP();
+}
+function ippSetText(cid,text,name){
+  const c=getClient(cid);
+  if(!text||text.trim().length<50){ alert("Couldn't find readable text — if it's a scanned PDF, paste the text instead."); return; }
+  c.pcp._ipptext=text.slice(0,400000); c.pcp._ippname=name; c.pcp._ippdate=today();
+  delete IPP_CACHE[cid];
+  save(); renderPCP();
+}
+function clearIpp(cid){ const c=getClient(cid); delete c.pcp._ipptext; delete c.pcp._ippname; delete c.pcp._ippdate; delete IPP_CACHE[cid]; save(); renderPCP(); }
+function ippPasteSave(cid){ ippSetText(cid, document.getElementById("ipp_paste").value, "pasted text"); }
+function ippFile(cid,input){
+  const f=input.files[0]; if(!f) return;
+  if(/\.txt$/i.test(f.name)){
+    const r=new FileReader(); r.onload=()=>ippSetText(cid,r.result,f.name); r.readAsText(f); return;
+  }
+  loadPdfJs().then(()=>{
+    const r=new FileReader();
+    r.onload=async()=>{
+      try{
+        const pdf=await pdfjsLib.getDocument({data:new Uint8Array(r.result)}).promise;
+        let text="";
+        for(let i=1;i<=pdf.numPages;i++){
+          const pg=await pdf.getPage(i); const tc=await pg.getTextContent();
+          text+=tc.items.map(x=>x.str).join(" ")+"\n\n";
+        }
+        ippSetText(cid,text,f.name);
+      }catch(e){ alert("Could not read that PDF ("+e.message+"). Paste the text instead."); }
+    };
+    r.readAsArrayBuffer(f);
+  }).catch(()=>alert("PDF reading needs an internet connection the first time (to load the PDF library). Or paste the IPP text instead."));
+}
+
+function copyClaudePrompt(cid){
+  const c=getClient(cid);
+  const prompt=["I'm an Independent Facilitator in California's Self-Determination Program, preparing a Person-Centered Plan. I'm uploading my client's IPP report. Please analyze it and give me plain-text sections I can paste into my PCP builder:","",
+  "1. About the person - strengths, gifts, what people admire",
+  "2. Important TO them - preferences, interests, routines, choices",
+  "3. Important FOR them - health, safety, medication, supervision needs",
+  "4. How they communicate - style, devices, best ways to engage",
+  "5. Goals & desired outcomes - stated and implied",
+  "6. Current services & supports - with hours, providers, service codes if listed",
+  "7. Circle of support - family and team members and their roles",
+  "8. Action items & key dates - reviews, deadlines, responsibilities",
+  "9. Gaps & spending plan ideas - needs mentioned with no service attached, and which SDP service codes (310-378) might address them, with a draft justification tying each to an IPP outcome","",
+  "Also flag anything in the IPP that seems inconsistent or worth clarifying with the service coordinator."].join("\n");
+  navigator.clipboard.writeText(prompt).then(()=>alert("Prompt copied! Open Claude, attach the IPP file"+(c&&c.name?" for "+c.name:"")+", paste this prompt, and send. Then paste Claude's summary back into the PCP sections here."));
+}
+
+function copyPcpDeckPrompt(cid){
+  const c=getClient(cid);
+  const nm=c&&c.name?c.name:"[client name]";
+  const prompt=[
+"I'm an Independent Facilitator in California's Self-Determination Program. I'm attaching "+nm+"'s IPP report and my intake/person-centered planning meeting notes. Create a polished Person-Centered Plan PRESENTATION (PowerPoint file) with exactly this structure:",
+"",
+"Slide 1 - Title: 'PERSON-CENTERED PLAN' + the person's name, a short aspirational tagline (e.g. 'A Plan Built Around Their Future'), 3 status chips (current status / program or field / facilitator), and a footer with the meeting date and 4-5 focus areas.",
+"Slide 2 - ABOUT THE PERSON: 'Who Is [Name]?' - a warm 2-3 sentence narrative of who they are, then 6 identity cards, each a 2-3 word label + one-line description (strengths, passions, what people admire).",
+"Slide 3 - WHAT MATTERS: two columns - 'Important TO [Name]' (relationships, activities, routines, values, preferences) and 'Important FOR [Name]' (health, safety, skills to build, supports) - about 8 bullets each.",
+"Slide 4 - What's Working & What's Not: an honest two-column snapshot of where they stand today, about 7 bullets each side.",
+"Slides 5-7 - three GOAL slides, one per priority outcome from the IPP/notes. Each has: a domain kicker line (e.g. EMPLOYMENT & CAREER DEVELOPMENT, INDEPENDENT LIVING & SELF-REGULATION, COMMUNITY PARTICIPATION), a short goal title, one measurable goal statement with a timeframe, 3-5 concrete action steps, a 'Supports Needed' list, and 'Timeframe: X'.",
+"Slide 8 - Unmet Needs: five gaps that need attention, each a bold title + 1-2 sentences on what's missing and why it matters.",
+"Slide 9 - SUPPORTS OVERVIEW, 'The Team Around [Name]': three columns - Natural Supports (family/friends), Formal/Professional (services, coaching, associations), Environmental Needs (settings, accommodations, structure).",
+"Slide 10 - The Vision: one inspiring future-tense paragraph of the life this plan builds toward + three pillar statements, and a footer 'Person-Centered Plan [year] - Prepared by [facilitator]'.",
+"",
+"Rules:",
+"- Use ONLY facts from the attached documents. Never invent details. If something important is unknown, leave a [confirm] placeholder.",
+"- Person-first, strengths-based, warm but honest - include real challenges plainly, the way slide 4 and the unmet needs demand.",
+"- Keep the person's own words and specific personal details (favorite activities, real names of supports) wherever the notes capture them.",
+"- Where goals involve purchased services, note the SDP connection (service codes 310-378) so the plan feeds the spending plan.",
+"- If the IPP and my meeting notes disagree, prefer my notes in the deck and give me a separate 'Facilitator review flags' list (outside the presentation) of every discrepancy and anything to verify with the service coordinator.",
+"- Design: clean and modern, generous white space, one consistent accent color, minimal text per slide.",
+"- I will open this in GOOGLE SLIDES: use standard fonts (Arial/Roboto), simple shapes and text boxes only, no PowerPoint-only effects or embedded media, so it converts to Google Slides perfectly."
+].join("\n");
+  navigator.clipboard.writeText(prompt).then(()=>alert("Prompt copied! In Claude: attach the IPP report AND your intake meeting notes, paste this prompt, and send. Claude returns a .pptx styled like your Zachary example. To use it in Google Slides: upload the .pptx to drive.google.com, right-click it, Open with, Google Slides, then File, Save as Google Slides."));
+}
+
+let _pdfjsP=null;
+function loadPdfJs(){
+  if(window.pdfjsLib) return Promise.resolve();
+  if(_pdfjsP) return _pdfjsP;
+  _pdfjsP=new Promise((res,rej)=>{
+    const s=document.createElement("script");
+    s.src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+    s.onload=()=>{ pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"; res(); };
+    s.onerror=rej;
+    document.head.appendChild(s);
+  });
+  return _pdfjsP;
+}
+</script>
+<script>
+/* ================= RC-SPECIFIC FORMS LIBRARY ================= */
+/* Verified SDP page links (from RC sites); others fall back to a site search */
+const RC_SDP_LINKS = {
+ NLACRC:"https://www.nlacrc.org/consumers-families/self-determination-program/",
+ FDLRC:"https://lanterman.org/client-and-family-services/self-determination-program/sdp-resources/",
+ RCOC:"https://www.rcocdd.com/client-services/self-determination/",
+ HRC:"https://www.harborrc.org/services/self-determination-program-sdp/",
+ SARC:"https://www.sanandreasregional.org/clients/self-determination-program/"
+};
+function rcSdpLink(rc){
+  if(RC_SDP_LINKS[rc.id]) return {url:RC_SDP_LINKS[rc.id],label:rc.id+" SDP page"};
+  const dom=rc.web.replace(/^https?:\/\/(www\.)?/,"");
+  return {url:"https://www.google.com/search?q=%22self-determination%22+forms+site:"+dom,label:"Find "+rc.id+"'s SDP forms (site search)"};
+}
+function rcFormsStore(rcid){ if(!DB.rcForms) DB.rcForms={}; if(!DB.rcForms[rcid]) DB.rcForms[rcid]=[]; return DB.rcForms[rcid]; }
+function rcFormsCard(c){
+  if(!c.rc) return `<div class="alert amber">Set this client's regional center (Clients tab) to see that RC's SDP forms here.</div>`;
+  const rc=REGIONAL_CENTERS.find(r=>r.id===c.rc); if(!rc) return "";
+  const link=rcSdpLink(rc);
+  const forms=rcFormsStore(rc.id);
+  let h=`<div class="card" style="border-left:4px solid var(--blue)"><h3 class="mt0">🏛 ${rc.id} — local SDP forms &amp; rules</h3>
+  <p class="muted">Each RC runs SDP with its own templates and processes. Save ${rc.id}'s current forms here once — they'll show automatically for every ${rc.id} client. Always confirm you have the latest version before submitting.</p>
+  <p><a href="${link.url}" target="_blank" rel="noopener">🔗 ${link.label}</a> · <a href="${rc.web}" target="_blank" rel="noopener">${rc.id} website</a></p>`;
+  if(DB.rcNotes[rc.id]) h+=`<div class="alert blue"><strong>Your ${rc.id} process notes:</strong> ${esc(DB.rcNotes[rc.id])}</div>`;
+  else h+=`<p class="muted">No process notes for ${rc.id} yet — add them in the Regional Centers tab (orientation schedule, revision process, who to send what).</p>`;
+  h+=`<table><tr><th>Form / template</th><th>Type</th><th>Added</th><th>Note</th><th></th><th></th></tr>`;
+  forms.forEach((f,i)=>{
+    h+=`<tr><td><strong>${esc(f.name)}</strong></td><td>${f.stored?"📄 file":"🔗 link"}</td><td>${esc(f.date)}</td><td>${esc(f.note||"")}</td>
+    <td>${f.stored?`<button class="btn small secondary" onclick="openRcForm('${rc.id}',${i})">Open</button>`:`<a href="${esc(f.url)}" target="_blank" rel="noopener"><button class="btn small secondary">Open</button></a>`}</td>
+    <td><span class="del-x" onclick="delRcForm('${rc.id}',${i})">✕</span></td></tr>`;
+  });
+  if(!forms.length) h+=`<tr><td colspan="6" class="muted">No ${rc.id} forms saved yet. Typical ones to collect: their spending plan template, budget worksheet, SDP enrollment packet, revision request form.</td></tr>`;
+  h+=`</table>
+  <div class="row"><div><label>Form name</label><input id="rcf_name" placeholder="e.g. ${rc.id} spending plan template"></div>
+  <div><label>Link (URL)</label><input id="rcf_url" placeholder="paste link — or upload a file instead"></div>
+  <div><label>…or upload file</label><input type="file" id="rcf_file"></div>
+  <div><label>Note</label><input id="rcf_note" placeholder="version/date info"></div>
+  <div><button class="btn" onclick="addRcForm('${rc.id}')">Save to ${rc.id} library</button></div></div></div>`;
+  return h;
+}
+async function addRcForm(rcid){
+  const name=v("rcf_name"), url=v("rcf_url"), note=v("rcf_note");
+  const file=document.getElementById("rcf_file").files[0];
+  if(!name){ alert("Give the form a name."); return; }
+  if(!url&&!file){ alert("Add a link or upload a file."); return; }
+  let stored=false, fname="";
+  if(file){
+    if(!backupDir){ alert("To store form files, connect 📁 auto-backup first — or paste a link instead."); return; }
+    try{
+      const lib=await backupDir.getDirectoryHandle("_RC Forms",{create:true});
+      const dir=await lib.getDirectoryHandle(rcid,{create:true});
+      fname=file.name.replace(/[\\/:*?"<>|]/g,"-");
+      const fh=await dir.getFileHandle(fname,{create:true});
+      const w=await fh.createWritable(); await w.write(file); await w.close();
+      stored=true;
+    }catch(e){ alert("Could not save the file: "+e.message); return; }
+  }
+  rcFormsStore(rcid).push({name,url,note,date:today(),stored,file:fname});
+  save(); renderForms();
+}
+function delRcForm(rcid,i){ if(confirm("Remove this from the library? (Stored files stay in the backup folder.)")){ rcFormsStore(rcid).splice(i,1); save(); renderForms(); } }
+async function openRcForm(rcid,i){
+  const f=rcFormsStore(rcid)[i];
+  if(!backupDir){ alert("Connect 📁 auto-backup to open stored files."); return; }
+  try{
+    const lib=await backupDir.getDirectoryHandle("_RC Forms");
+    const dir=await lib.getDirectoryHandle(rcid);
+    const fh=await dir.getFileHandle(f.file);
+    window.open(URL.createObjectURL(await fh.getFile()),"_blank");
+  }catch(e){ alert("Could not open "+f.file+" — it may have been moved in the backup folder."); }
+}
+</script>
+<script>
+/* ================= FMS SPREADSHEET IMPORT ================= */
+let IMPORT=null; /* {cid, name, headers, rows} */
+function fmsImportCard(c){
+  let h=`<div class="card"><h3 class="mt0">📊 Import FMS spreadsheet</h3>
+  <p class="muted">Upload the FMS report and the app updates spending automatically — no portal login needed. Spreadsheets (.xlsx/.csv) import as transactions; a <strong>Spending Summary PDF</strong> (like CFMS sends) syncs authorized amounts, monthly spending per service code, and pending approvals. Re-uploading a newer report is safe — nothing double-counts.</p>`;
+  if(PDFIMP&&PDFIMP.cid===c.id){ return h+pdfSummaryPreview(c)+`</div>`; }
+  if(!(IMPORT&&IMPORT.cid===c.id)){
+    h+=`<div class="row"><div><label>FMS report file (.xlsx, .csv, or Spending Summary PDF)</label><input type="file" accept=".xlsx,.xls,.csv,.pdf" onchange="fmsSheet('${c.id}',this)"></div></div>${c.lastSummary?`<p class="muted">Last Spending Summary applied: ${esc(c.lastSummary.file)} (as of ${esc(c.lastSummary.asOf)})</p>`:""}`;
+  } else {
+    const heads=IMPORT.headers;
+    const opt=(sel)=>heads.map((x,i)=>`<option value="${i}" ${i===sel?"selected":""}>${esc(String(x||"column "+(i+1)))}</option>`).join("");
+    h+=`<p><strong>${esc(IMPORT.name)}</strong> — ${IMPORT.rows.length} data rows found. Tell me which column is which:</p>
+    <div class="row">
+      <div><label>Date column</label><select id="imp_date">${opt(guessCol(heads,["date","service date","week","period"]))}</select></div>
+      <div><label>Amount column</label><select id="imp_amt">${opt(guessCol(heads,["amount","total","paid","cost","gross","expense"]))}</select></div>
+      <div><label>Description column</label><select id="imp_desc">${opt(guessCol(heads,["desc","service","provider","vendor","employee","worker","type"]))}</select></div>
+      <div><label>Unmatched rows go to</label><select id="imp_line">${c.plan.map(i=>`<option value="${i.id}">${esc(i.code)} — ${esc(i.desc)}</option>`).join("")}<option value="">(skip unmatched)</option></select></div>
+    </div>
+    <table><tr>${heads.map(x=>`<th>${esc(String(x||""))}</th>`).join("")}</tr>
+    ${IMPORT.rows.slice(0,4).map(r=>`<tr>${heads.map((x,i)=>`<td>${esc(String(r[i]??""))}</td>`).join("")}</tr>`).join("")}</table>
+    <p class="muted">Preview of first rows — check the mapping looks right, then import.</p>
+    <button class="btn" onclick="doFmsImport('${c.id}')">Import spending</button>
+    <button class="btn secondary" onclick="IMPORT=null;renderBudget()">Cancel</button>`;
+  }
+  return h+`</div>`;
+}
+function guessCol(heads,kws){
+  for(const kw of kws){ const i=heads.findIndex(x=>String(x||"").toLowerCase().includes(kw)); if(i>=0) return i; }
+  return 0;
+}
+function parseAmount(x){
+  if(typeof x==="number") return x;
+  let s=String(x||"").replace(/[$,\s]/g,"");
+  let neg=/^\(.*\)$/.test(s); s=s.replace(/[()]/g,"");
+  const n=parseFloat(s);
+  return isNaN(n)?null:(neg?-n:n);
+}
+function parseDate(x){
+  if(typeof x==="number" && x>25569 && x<70000){ /* excel serial */
+    return new Date(Math.round((x-25569)*86400000)).toISOString().slice(0,10);
+  }
+  const d=new Date(String(x)); return isNaN(d)?"":d.toISOString().slice(0,10);
+}
+function parseCSV(text){
+  const rows=[]; let row=[],cur="",q=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i];
+    if(q){ if(ch==='"'){ if(text[i+1]==='"'){cur+='"';i++;} else q=false; } else cur+=ch; }
+    else if(ch==='"') q=true;
+    else if(ch===","){ row.push(cur);cur=""; }
+    else if(ch==="\n"||ch==="\r"){ if(cur!==""||row.length){row.push(cur);rows.push(row);row=[];cur="";} if(ch==="\r"&&text[i+1]==="\n")i++; }
+    else cur+=ch;
+  }
+  if(cur!==""||row.length){row.push(cur);rows.push(row);}
+  return rows.filter(r=>r.some(x=>String(x).trim()!==""));
+}
+function fmsSheet(cid,input){
+  const f=input.files[0]; if(!f) return;
+  const c=getClient(cid);
+  if(!c.plan.length && !/\.pdf$/i.test(f.name)){ alert("Add spending plan lines first — imported rows get matched to them. (Spending Summary PDFs create lines automatically.)"); return; }
+  const setRows=(grid)=>{
+    if(grid.length<2){ alert("Couldn't find data rows in that file."); return; }
+    IMPORT={cid, name:f.name, headers:grid[0], rows:grid.slice(1)};
+    renderBudget();
+  };
+  if(/\.pdf$/i.test(f.name)){
+    loadPdfJs().then(()=>{
+      const r=new FileReader();
+      r.onload=async()=>{
+        try{
+          const pdf=await pdfjsLib.getDocument({data:new Uint8Array(r.result)}).promise;
+          let text="";
+          for(let i=1;i<=pdf.numPages;i++){
+            const pg=await pdf.getPage(i); const tc=await pg.getTextContent();
+            text+=tc.items.map(x=>x.str).join(" ")+"\n";
+          }
+          const parsed=parseSummaryPdf(text);
+          if(!parsed){ alert("This PDF doesn't look like a Spending Summary report — I couldn't find 'Service Code Total' rows. If it's a scanned image, ask the FMS for the emailed version."); return; }
+          PDFIMP={cid,name:f.name,...parsed};
+          renderBudget();
+        }catch(e){ alert("Could not read that PDF: "+e.message); }
+      };
+      r.readAsArrayBuffer(f);
+    }).catch(()=>alert("PDF reading needs an internet connection the first time (to load the PDF library)."));
+    return;
+  }
+  if(/\.csv$/i.test(f.name)){
+    const r=new FileReader(); r.onload=()=>setRows(parseCSV(r.result)); r.readAsText(f);
+  } else {
+    loadSheetJs().then(()=>{
+      const r=new FileReader();
+      r.onload=()=>{
+        try{
+          const wb=XLSX.read(new Uint8Array(r.result),{type:"array"});
+          const ws=wb.Sheets[wb.SheetNames[0]];
+          setRows(XLSX.utils.sheet_to_json(ws,{header:1,raw:true,defval:""}));
+        }catch(e){ alert("Could not read that spreadsheet ("+e.message+"). Try saving it as CSV and uploading that."); }
+      };
+      r.readAsArrayBuffer(f);
+    }).catch(()=>alert("Reading .xlsx needs an internet connection the first time (to load the spreadsheet library). Or save the report as CSV — that works offline."));
+  }
+}
+function doFmsImport(cid){
+  const c=getClient(cid);
+  const di=+v("imp_date"), ai=+v("imp_amt"), si=+v("imp_desc");
+  const defLine=v("imp_line");
+  let added=0, dup=0, skipped=0, bad=0;
+  IMPORT.rows.forEach(r=>{
+    const amt=parseAmount(r[ai]);
+    if(amt===null||amt===0){ bad++; return; }
+    const date=parseDate(r[di])||today();
+    const desc=String(r[si]??"").trim();
+    const fp=date+"|"+amt+"|"+desc.slice(0,40);
+    if(c.expenses.some(e=>e.fp===fp)){ dup++; return; }
+    /* match to plan line: service code in row, else keyword, else default */
+    let item=null;
+    const codeM=desc.match(/\b(3\d\d)\b/)||r.map(x=>String(x)).join(" ").match(/\b(3\d\d)\b/);
+    if(codeM) item=c.plan.find(i=>i.code===codeM[1]);
+    if(!item && /fms|fiscal/i.test(desc)) item=c.plan.find(i=>["315","316","317"].includes(i.code));
+    if(!item){
+      const lc=desc.toLowerCase();
+      item=c.plan.find(i=>i.desc.toLowerCase().split(/[^a-z]+/).some(w=>w.length>4&&lc.includes(w)));
+    }
+    if(!item&&defLine) item=c.plan.find(i=>i.id===defLine);
+    if(!item){ skipped++; return; }
+    c.expenses.push({id:uid(),date,itemId:item.id,amount:amt,note:desc+" (imported: "+IMPORT.name+")",fp});
+    added++;
+  });
+  IMPORT=null;
+  save(); renderBudget(); renderDashboard();
+  alert("Import done: "+added+" rows logged"+(dup?", "+dup+" already imported (skipped)":"")+(skipped?", "+skipped+" unmatched (skipped)":"")+(bad?", "+bad+" without a usable amount":"")+". Check the totals against the FMS report, then send the client update.");
+}
+let _sheetP=null;
+function loadSheetJs(){
+  if(window.XLSX) return Promise.resolve();
+  if(_sheetP) return _sheetP;
+  _sheetP=new Promise((res,rej)=>{
+    const s=document.createElement("script");
+    s.src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+    s.onload=res; s.onerror=rej;
+    document.head.appendChild(s);
+  });
+  return _sheetP;
+}
+</script>
+<script>
+/* ================= CFMS SPENDING SUMMARY (PDF) IMPORT ================= */
+let PDFIMP=null; /* {cid,name,asOf,months[],rows[],budget} */
+function catForCode(code){
+  const n=+code;
+  if(n>=310&&n<=330) return "Living Arrangement";
+  if(n>=331&&n<=355) return "Employment & Community Participation";
+  return "Health & Safety";
+}
+function parseSummaryPdf(text){
+  const money=s=>parseFloat(s.replace(/[$,]/g,""));
+  const asOfM=text.match(/Spending Summary as of (\d{2}\/\d{2}\/\d{4})/);
+  const budM=text.match(/Total Budget Approved:?\s*\$([\d,]+\.\d\d)/);
+  const nameM=text.match(/Participant Name:?\s*([A-Za-z .'-]+?)\s*(Participant|UCI|Total)/);
+  const yrM=text.match(/SDP Year:?\s*(\d{2})\/(\d{2})\/(\d{4})\s*to\s*(\d{2})\/(\d{2})\/(\d{4})/);
+  /* month header sequence e.g. "Sep 25 Oct 25 ... Jun 26" */
+  const mm=[...text.matchAll(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s?(\d{2})\b/g)].map(x=>x[1]+" "+x[2]);
+  const months=[]; for(const m of mm){ if(months.includes(m)){ if(months.length>=2) break; } else months.push(m); }
+  const rows=[];
+  const re=/(\d{3})\s+Service Code Total((?:\s+\$[\d,]+\.\d\d)+)/g;
+  let m;
+  while((m=re.exec(text))){
+    const code=m[1];
+    const vals=m[2].match(/\$[\d,]+\.\d\d/g).map(money);
+    if(vals.length<5) continue;
+    const authorized=vals[0], used=vals[vals.length-3], pending=vals[vals.length-2], avail=vals[vals.length-1];
+    const monthly=vals.slice(1,vals.length-3);
+    /* service name: text between "CODE " and "CODE Service Code Total" */
+    const nm=text.match(new RegExp(code+"\\s+([A-Za-z][^$]{2,90}?)\\s+"+code+"\\s+(?:Service Code Total|Employee|Vendor)"));
+    const sc=SERVICE_CODES.find(s=>s.code===code);
+    rows.push({code, name:(nm?nm[1].trim():(sc?sc.name:"Service "+code)), authorized, monthly, used, pending, avail});
+  }
+  if(!rows.length) return null;
+  return {asOf:asOfM?asOfM[1]:"", budget:budM?money("$"+budM[1]):0, participant:nameM?nameM[1].trim():"",
+    sdpStart:yrM?yrM[3]+"-"+yrM[1]+"-"+yrM[2]:"", sdpEnd:yrM?yrM[6]+"-"+yrM[4]+"-"+yrM[5]:"", months, rows};
+}
+function monthToDate(label){
+  const map={Jan:"01",Feb:"02",Mar:"03",Apr:"04",May:"05",Jun:"06",Jul:"07",Aug:"08",Sep:"09",Oct:"10",Nov:"11",Dec:"12"};
+  const p=label.split(/\s+/);
+  return "20"+p[1]+"-"+map[p[0]]+"-15";
+}
+function pdfSummaryPreview(c){
+  const P=PDFIMP;
+  let h=`<p><strong>${esc(P.name)}</strong> — Spending Summary as of <strong>${esc(P.asOf)}</strong>${P.participant?" for "+esc(P.participant):""}. Found ${P.rows.length} service codes across ${P.months.length} months:</p>
+  <table><tr><th>Code</th><th>Service</th><th class="right">Authorized</th><th class="right">Used to date</th><th class="right">Pending</th><th class="right">Available</th></tr>`;
+  P.rows.forEach(r=>{
+    h+=`<tr><td>${r.code}</td><td>${esc(r.name)}</td><td class="right">${money(r.authorized)}</td><td class="right">${money(r.used)}</td><td class="right">${money(r.pending)}</td><td class="right">${money(r.avail)}</td></tr>`;
+  });
+  h+=`</table>
+  <label style="display:flex;gap:8px;align-items:center;font-weight:400;margin:10px 0"><input type="checkbox" id="pdf_sync" checked style="width:18px;height:18px"> Also set each plan line's annual amount to the authorized amount from this report</label>
+  ${P.budget&&c.budget&&Math.abs(P.budget-c.budget)>1?`<div class="alert amber">Report budget ${money(P.budget)} differs from the app's ${money(+c.budget)} — importing will update the client's budget to match the report.</div>`:""}
+  <button class="btn" onclick="applySummaryPdf('${c.id}')">Apply to budget &amp; spending</button>
+  <button class="btn secondary" onclick="PDFIMP=null;renderBudget()">Cancel</button>`;
+  return h;
+}
+function applySummaryPdf(cid){
+  const c=getClient(cid); const P=PDFIMP;
+  const sync=document.getElementById("pdf_sync")?document.getElementById("pdf_sync").checked:true;
+  let entries=0,newLines=0;
+  P.rows.forEach(r=>{
+    let item=c.plan.find(i=>i.code===r.code);
+    if(!item){ item={id:uid(),code:r.code,cat:catForCode(r.code),desc:r.name,annual:r.authorized}; c.plan.push(item); newLines++; }
+    if(sync) item.annual=r.authorized;
+    item.pending=r.pending||0;
+    r.monthly.forEach((amt,i)=>{
+      const label=P.months[i]; if(label===undefined) return;
+      const fp="PDFSUM|"+r.code+"|"+label;
+      const ex=c.expenses.find(e=>e.fp===fp);
+      if(ex){ if(ex.amount!==amt){ ex.amount=amt; ex.note=r.name+" — "+label+" (summary as of "+P.asOf+")"; entries++; } }
+      else if(amt>0){ c.expenses.push({id:uid(),date:monthToDate(label),itemId:item.id,amount:amt,note:r.name+" — "+label+" (summary as of "+P.asOf+")",fp}); entries++; }
+    });
+  });
+  if(P.budget) c.budget=P.budget;
+  if(P.sdpStart) c.planStart=P.sdpStart;
+  if(P.sdpEnd) c.planEnd=P.sdpEnd;
+  c.lastSummary={asOf:P.asOf,file:P.name};
+  PDFIMP=null;
+  save(); renderBudget(); renderDashboard();
+  alert("Spending Summary applied: "+entries+" monthly entries updated"+(newLines?", "+newLines+" plan lines created":"")+". Totals now match the report as of "+(c.lastSummary.asOf||"the report date")+". Pending amounts are shown on each line.");
+}
+</script>
+<script>
+/* ================= PLAN YEAR / REMAINING MONTHS ================= */
+function monthsBetween(a,b){ return Math.max(0,(b-a)/(86400000*30.44)); }
+function localDate(s){ const p=String(s).split("-"); return new Date(+p[0],+p[1]-1,+p[2]); }
+function planYearInfo(c){
+  if(!c.planStart||!c.planEnd) return null;
+  const s=localDate(c.planStart), e=localDate(c.planEnd), n=new Date();
+  const total=Math.round(monthsBetween(s,e));
+  const remaining=Math.min(total,Math.ceil(monthsBetween(n,e)));
+  const elapsed=Math.max(0,total-remaining);
+  return {start:s,end:e,total,remaining,elapsed,over:n>e};
+}
+function fmtDate(d){ return (d.getMonth()+1)+"/"+d.getDate()+"/"+d.getFullYear(); }
+function perMonthLeft(c,left){
+  const py=planYearInfo(c);
+  if(!py||py.remaining<1||left<=0) return "";
+  return money(left/py.remaining)+"/mo";
+}
+function planYearCard(c){
+  const py=planYearInfo(c);
+  if(!py) return `<div class="alert amber">Add the plan year start &amp; end dates on the Clients tab (or import a Spending Summary PDF) to see months remaining and monthly spending power.</div>`;
+  if(py.end<=py.start) return `<div class="alert red"><strong>Check the plan year dates:</strong> the start (${fmtDate(py.start)}) isn't before the end (${fmtDate(py.end)}) — likely a wrong year. Fix them on the Clients tab, or re-import the Spending Summary PDF to set them automatically.</div>`;
+  if(new Date()<py.start) return `<div class="card" style="border-left:4px solid var(--blue)"><h3 class="mt0">📅 Plan year: ${fmtDate(py.start)} — ${fmtDate(py.end)}</h3><p>Hasn't started yet — ${py.total} months and ${money(c.budget-spentTotal(c))} ahead, about ${money(py.total>0?(c.budget-spentTotal(c))/py.total:0)}/month.</p></div>`;
+  const rem=c.budget-spentTotal(c);
+  const pm=py.remaining>0?rem/py.remaining:0;
+  if(py.over) return `<div class="alert red"><strong>Plan year ended ${fmtDate(py.end)}.</strong> Time to renew the budget and spending plan.</div>`;
+  return `<div class="card" style="border-left:4px solid var(--green)"><h3 class="mt0">📅 Plan year: ${fmtDate(py.start)} — ${fmtDate(py.end)}</h3>
+  <div class="grid cols3">
+    <div class="stat"><div class="num">${py.remaining}</div><div class="lbl">months remaining (of ${py.total})</div></div>
+    <div class="stat"><div class="num">${money(rem)}</div><div class="lbl">left to spend</div></div>
+    <div class="stat"><div class="num">${money(pm)}</div><div class="lbl">available per remaining month</div></div>
+  </div>
+  <div class="bar"><div style="width:${Math.round(py.elapsed/py.total*100)}%"></div></div>
+  <p class="muted">${py.elapsed} of ${py.total} months used. Spending evenly, there's about ${money(pm)} to work with each month through ${fmtDate(py.end)}.</p></div>`;
+}
+</script>
+<script>
+/* ================= CLIENT REPORT AS PDF ================= */
+let _jspdfP=null;
+function loadJsPdf(){
+  if(window.jspdf&&window.jspdf.jsPDF&&window.jspdfAutoTableLoaded) return Promise.resolve();
+  if(_jspdfP) return _jspdfP;
+  const add=src=>new Promise((res,rej)=>{const s=document.createElement("script");s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s);});
+  _jspdfP=add("https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js")
+    .then(()=>add("https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"))
+    .then(()=>{window.jspdfAutoTableLoaded=true;});
+  return _jspdfP;
+}
+async function reportPdf(cid){
+  const c=getClient(cid); if(!c) return;
+  try{ await loadJsPdf(); }
+  catch(e){ alert("Building a PDF needs an internet connection the first time (to load the PDF library). Alternative: Preview → Print → choose 'Save as PDF'."); return; }
+  const doc=new jspdf.jsPDF();
+  const sp=spentTotal(c), rem=c.budget-sp, up=Math.round(utilization(c)), yp=planYearPct(c), py=planYearInfo(c);
+  doc.setFontSize(15); doc.setTextColor(26,95,168);
+  doc.text("SDP Budget Update — "+c.name,14,16);
+  doc.setFontSize(9.5); doc.setTextColor(90,90,90);
+  doc.text("Prepared "+new Date().toLocaleDateString()+" by your Independent Facilitator  ·  Regional center: "+(c.rc||"—")+(py?"  ·  Plan year "+fmtDate(py.start)+" to "+fmtDate(py.end):""),14,22);
+  doc.autoTable({startY:27,head:[["Annual budget","Spent to date","Remaining","% used","% of year",py&&!py.over?"Months left":"", py&&!py.over&&py.remaining>0?"Avail / month":""].filter(x=>x!=="")],
+    body:[[money(+c.budget),money(sp),money(rem),up+"%",yp===null?"—":yp+"%",py&&!py.over?String(py.remaining):"",py&&!py.over&&py.remaining>0?money(rem/py.remaining):""].filter((x,i,a)=>x!==""||i<5)],
+    styles:{fontSize:8.5},headStyles:{fillColor:[26,95,168]}});
+  const body=c.plan.map(i=>{
+    const s2=spentForItem(c,i.id); const pm=perMonthLeft(c,(+i.annual||0)-s2);
+    return [i.code,i.desc,money(+i.annual),money(s2),money((+i.annual||0)-s2),pm||"-"];
+  });
+  doc.autoTable({startY:doc.lastAutoTable.finalY+6,head:[["Code","Service","Annual","Spent","Remaining","Per month left"]],body,
+    styles:{fontSize:8.5},headStyles:{fillColor:[26,95,168]},columnStyles:{1:{cellWidth:60}}});
+  let y=doc.lastAutoTable.finalY+8;
+  const al=clientAlerts(c);
+  if(al.length){
+    doc.setFontSize(11); doc.setTextColor(26,95,168); doc.text("Things to watch",14,y); y+=5;
+    doc.setFontSize(9); doc.setTextColor(40,40,40);
+    al.forEach(a=>{ const lines=doc.splitTextToSize("• "+a.msg,180); doc.text(lines,14,y); y+=lines.length*4.2+1; });
+  }
+  doc.setFontSize(7.5); doc.setTextColor(120,120,120);
+  doc.text("Figures reflect spending logged by the facilitator; reconcile against FMS monthly statements.",14,285);
+  const fname="Budget Update - "+sanitizeName(c.name)+" - "+today()+".pdf";
+  const blob=doc.output("blob");
+  let where="downloaded to your Downloads folder";
+  if(backupDir){
+    try{
+      const folder=await backupDir.getDirectoryHandle(sanitizeName(c.name),{create:true});
+      const docs=await folder.getDirectoryHandle("Documents",{create:true});
+      const fh=await docs.getFileHandle(fname,{create:true});
+      const w=await fh.createWritable(); await w.write(blob); await w.close();
+      const d=docStore(c); d.other=d.other.filter(o=>o.file!==fname);
+      d.other.push({date:today(),cat:"Budget update (PDF)",note:"Sent to client",file:fname,stored:true});
+      save();
+      where="saved to "+c.name+"'s Documents folder (and listed in the Documents tab)";
+    }catch(e){ doc.save(fname); }
+  } else doc.save(fname);
+  if(c.email && confirm("PDF "+where+".\n\nOpen the email now? (Attach the PDF to the email before sending — browsers can't attach it automatically.)")){
+    emailUpdate(cid);
+  } else if(!c.email) alert("PDF "+where+".");
+}
+</script>
+</body>
+</html>
