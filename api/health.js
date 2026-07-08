@@ -1,0 +1,1 @@
+module.exports = async (req, res) => { const configured = !!((process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL) && (process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN) && process.env.RESEND_API_KEY && process.env.ADMIN_SECRET && process.env.ADMIN_EMAIL); res.status(200).json({ ok: true, configured }); };
