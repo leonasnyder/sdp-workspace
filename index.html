@@ -119,6 +119,8 @@ details>div{padding:4px 16px 14px}
     <button onclick="exportData()">⬇ Backup data</button>
     <button onclick="document.getElementById('importFile').click()">⬆ Restore</button>
     <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+    <button id="acctBtn" onclick="changePassword()" style="display:none">🔑 Change password</button>
+    <button id="signoutBtn" onclick="signOut()" style="display:none">↩ Sign out</button>
   </div>
 </header>
 <nav id="mainNav">
@@ -1887,7 +1889,7 @@ async function doLogin(){
   authMsg("Signing in…");
   try{
     const r=await fetch("/api/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:em,password:pw,device:deviceId()})}).then(x=>x.json());
-    if(r.ok){ lsSet("ifsdp_token",r.token); lsSet("ifsdp_okat",String(Date.now())); hideLanding(); renderAll(); }
+    if(r.ok){ lsSet("ifsdp_token",r.token); lsSet("ifsdp_okat",String(Date.now())); hideLanding(); showAcctButtons(); renderAll(); }
     else authMsg(r.error||"Could not sign in.","#dc2626");
   }catch(e){ authMsg("Couldn't reach the server — try again in a moment.","#dc2626"); }
 }
@@ -1905,6 +1907,18 @@ async function doSignup(){
   }catch(e){ authMsg("Couldn't reach the server — try again in a moment.","#dc2626"); }
 }
 function inp(id,ph,type){ return '<input id="'+id+'" type="'+(type||"text")+'" placeholder="'+ph+'" style="width:100%;box-sizing:border-box;padding:11px;border:1px solid #e2e8f0;border-radius:10px;font-size:15px;margin-bottom:8px" onkeydown="if(event.key===&quot;Enter&quot;)'+(authMode==="signin"?"doLogin":"doSignup")+'()">'; }
+function pwInp(id,ph){ return '<div style="position:relative;margin-bottom:8px"><input id="'+id+'" type="password" placeholder="'+ph+'" style="width:100%;box-sizing:border-box;padding:11px;padding-right:56px;border:1px solid #e2e8f0;border-radius:10px;font-size:15px" onkeydown="if(event.key===&quot;Enter&quot;)'+(authMode==="signin"?"doLogin":"doSignup")+'()"><button type="button" onclick="togglePw(&quot;'+id+'&quot;,this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:#ea580c;font-size:13px;font-weight:600;cursor:pointer">Show</button></div>'; }
+function togglePw(id,btn){ const el=document.getElementById(id); if(!el) return; if(el.type==="password"){ el.type="text"; btn.textContent="Hide"; } else { el.type="password"; btn.textContent="Show"; } }
+async function doForgot(){
+  const em=(document.getElementById("authEmail")||{}).value||"";
+  const e=(em||prompt("Enter your account email to request a password reset:")||"").trim();
+  if(!e||e.indexOf("@")<1){ authMsg("Enter your email above, then click Forgot password.","#dc2626"); return; }
+  authMsg("Requesting reset…");
+  try{
+    const r=await fetch("/api/forgot",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:e})}).then(x=>x.json());
+    authMsg(r.message||"If that account exists, your facilitator has been notified.","#15803d");
+  }catch(err){ authMsg("Couldn't reach the server — try again.","#dc2626"); }
+}
 function accessCardHtml(){
   if(!BACKEND) return '<p style="color:#7c2d12;font-weight:700;margin:0 0 10px">🗝️ Invite-only access</p>'+
     '<input id="gateCode" placeholder="Enter your access code" style="width:100%;box-sizing:border-box;padding:12px;border:1px solid #e2e8f0;border-radius:10px;font-size:15px;text-align:center;letter-spacing:.05em" onkeydown="if(event.key===&quot;Enter&quot;)gateTry()">'+
@@ -1915,12 +1929,24 @@ function accessCardHtml(){
   const btn=(fn,label)=>'<button onclick="'+fn+'()" style="width:100%;margin-top:10px;padding:12px;border:none;border-radius:10px;background:linear-gradient(120deg,#f97316,#ea580c);color:#fff;font-size:15px;font-weight:700;cursor:pointer">'+label+'</button>';
   let h='<div style="display:flex;gap:6px;margin-bottom:14px">'+tab("signin","Sign In")+tab("signup","Create Account")+'</div>';
   if(authMode==="signup") h+=inp("authName","Your name");
-  h+=inp("authEmail","Email","email")+inp("authPw","Password","password");
+  h+=inp("authEmail","Email","email")+pwInp("authPw","Password");
   h+=(authMode==="signin"?btn("doLogin","Sign In"):btn("doSignup","Create Account"));
+  if(authMode==="signin") h+='<p style="text-align:right;margin:8px 0 0"><a href="#" onclick="doForgot();return false" style="color:#ea580c;font-size:13px">Forgot password?</a></p>';
   h+='<p id="authMsg" style="font-size:13px;margin:8px 0 0;min-height:16px;color:#64748b"></p>';
   h+='<p style="color:#94a3b8;font-size:12px;margin:6px 0 0">'+(authMode==="signin"?"New here? Create an account — your facilitator approves it before you can sign in.":"New accounts are approved by your facilitator before first sign-in.")+'</p>';
   return h;
 }
+function showAcctButtons(){ ["acctBtn","signoutBtn"].forEach(id=>{ const b=document.getElementById(id); if(b) b.style.display=""; }); }
+async function changePassword(){
+  const tok=lsGet("ifsdp_token"); if(!tok){ alert("Change password is available when you're signed in with an account."); return; }
+  const oldPw=prompt("Enter your current password:"); if(oldPw===null) return;
+  const newPw=prompt("Enter your new password (at least 6 characters):"); if(newPw===null) return;
+  try{
+    const r=await fetch("/api/changepw",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:tok,oldPassword:oldPw,newPassword:newPw})}).then(x=>x.json());
+    alert(r.ok?"Password changed. Use your new password next time you sign in.":(r.error||"Could not change password."));
+  }catch(e){ alert("Couldn't reach the server — try again."); }
+}
+function signOut(){ if(!confirm("Sign out of this device? Your client data stays saved in this browser.")) return; lsDel("ifsdp_token"); lsDel("ifsdp_okat"); location.reload(); }
 async function initGate(){
   try{
     const url=new URL(location.href);
@@ -1933,10 +1959,10 @@ async function initGate(){
     hideLanding();
     try{
       const v=await fetch("/api/verify",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:tok,device:deviceId()})}).then(r=>r.json());
-      if(v.ok){ lsSet("ifsdp_okat",String(Date.now())); return; }
+      if(v.ok){ lsSet("ifsdp_okat",String(Date.now())); showAcctButtons(); return; }
       lsDel("ifsdp_token"); showLanding(); return;
     }catch(e){
-      if(Date.now()-(+lsGet("ifsdp_okat")||0) < 7*86400000) return; /* offline grace */
+      if(Date.now()-(+lsGet("ifsdp_okat")||0) < 7*86400000){ showAcctButtons(); return; } /* offline grace */
       showLanding(); return;
     }
   }
