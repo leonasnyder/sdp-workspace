@@ -126,6 +126,7 @@ details>div{padding:4px 16px 14px}
   <button data-view="clients">👥 Clients</button>
   <button data-view="process">🗺️ Process</button>
   <button data-view="budget">💰 Budget</button>
+  <button data-view="splan">🧾 Spending Plan</button>
   <button data-view="goals">🎯 Goals &amp; Asks</button>
   <button data-view="compliance">✅ Compliance</button>
   <button data-view="pcp">📋 PCP Builder</button>
@@ -139,6 +140,7 @@ details>div{padding:4px 16px 14px}
 <div class="view" id="view-clients"></div>
 <div class="view" id="view-process"></div>
 <div class="view" id="view-budget"></div>
+<div class="view" id="view-splan"></div>
 <div class="view" id="view-goals"></div>
 <div class="view" id="view-compliance"></div>
 <div class="view" id="view-pcp"></div>
@@ -296,8 +298,8 @@ function showView(v){
   document.getElementById("view-"+v).classList.add("active");
   render(v);
 }
-function renderAll(){ ["dashboard","clients","process","budget","goals","compliance","pcp","forms","docs","rcs","resources"].forEach(render); }
-function render(v){ ({dashboard:renderDashboard,clients:renderClients,process:renderProcess,budget:renderBudget,goals:renderGoals,compliance:renderCompliance,pcp:renderPCP,forms:renderForms,docs:renderDocs,rcs:renderRCs,resources:renderResources})[v](); }
+function renderAll(){ ["dashboard","clients","process","budget","splan","goals","compliance","pcp","forms","docs","rcs","resources"].forEach(render); }
+function render(v){ ({dashboard:renderDashboard,clients:renderClients,process:renderProcess,budget:renderBudget,splan:renderSplan,goals:renderGoals,compliance:renderCompliance,pcp:renderPCP,forms:renderForms,docs:renderDocs,rcs:renderRCs,resources:renderResources})[v](); }
 
 /* ================= HELPERS: budget math ================= */
 function planTotal(c){ return c.plan.reduce((s,i)=>s+(+i.annual||0),0); }
@@ -454,7 +456,7 @@ function v(id){ return document.getElementById(id).value.trim(); }
 </script>
 <script>
 /* ================= CLIENT PICKER (shared) ================= */
-const picked={process:null,budget:null,goals:null,compliance:null,pcp:null,forms:null,docs:null};
+const picked={process:null,budget:null,splan:null,goals:null,compliance:null,pcp:null,forms:null,docs:null};
 function pickerHtml(view){
   if(!DB.clients.length) return `<div class="card">Add a client first (Clients tab).</div>`;
   if(!picked[view]||!getClient(picked[view])) picked[view]=DB.clients[0].id;
@@ -1870,35 +1872,54 @@ function showLanding(){
   ov.innerHTML=landingHtml(); ov.style.display="block";
 }
 function hideLanding(){ const ov=document.getElementById("landing"); if(ov) ov.style.display="none"; }
+let authMode="signin";
+function setAuthMode(m){ authMode=m; const el=document.getElementById("authCard"); if(el) el.innerHTML=accessCardHtml(); }
 function gateTry(){
   const v=document.getElementById("gateCode").value.trim();
   if(ACCESS_CODES.some(x=>x.toUpperCase()===v.toUpperCase())){ lsSet("ifsdp_code",v); hideLanding(); }
   else document.getElementById("gateMsg").textContent="That code isn't valid — please check with your facilitator.";
 }
-async function requestAccess(){
-  const nm=document.getElementById("reqName").value.trim();
-  const em=document.getElementById("reqEmail").value.trim();
-  const msg=document.getElementById("gateMsg");
-  if(!em||em.indexOf("@")<1){ msg.style.color="#dc2626"; msg.textContent="Please enter your email."; return; }
-  msg.style.color="#64748b"; msg.textContent="Sending…";
+function authMsg(txt,color){ const m=document.getElementById("authMsg"); if(m){ m.textContent=txt; m.style.color=color||"#64748b"; } }
+async function doLogin(){
+  const em=document.getElementById("authEmail").value.trim();
+  const pw=document.getElementById("authPw").value;
+  if(!em||!pw){ authMsg("Enter your email and password.","#dc2626"); return; }
+  authMsg("Signing in…");
   try{
-    const r=await fetch("/api/request-access",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:nm,email:em})}).then(x=>x.json());
-    msg.style.color=r.ok?"#15803d":"#dc2626";
-    msg.textContent=r.ok?(r.message||"Request sent! You'll receive your personal access link once approved."):(r.error||"Something went wrong — try again.");
-  }catch(e){ msg.style.color="#dc2626"; msg.textContent="Couldn't reach the server — try again in a moment."; }
+    const r=await fetch("/api/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:em,password:pw,device:deviceId()})}).then(x=>x.json());
+    if(r.ok){ lsSet("ifsdp_token",r.token); lsSet("ifsdp_okat",String(Date.now())); hideLanding(); renderAll(); }
+    else authMsg(r.error||"Could not sign in.","#dc2626");
+  }catch(e){ authMsg("Couldn't reach the server — try again in a moment.","#dc2626"); }
 }
+async function doSignup(){
+  const nm=document.getElementById("authName").value.trim();
+  const em=document.getElementById("authEmail").value.trim();
+  const pw=document.getElementById("authPw").value;
+  if(!em||em.indexOf("@")<1){ authMsg("Please enter a valid email.","#dc2626"); return; }
+  if(pw.length<6){ authMsg("Password must be at least 6 characters.","#dc2626"); return; }
+  authMsg("Creating account…");
+  try{
+    const r=await fetch("/api/signup",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:nm,email:em,password:pw})}).then(x=>x.json());
+    authMsg(r.ok?(r.message||"Account created! You can sign in once approved."):(r.error||"Something went wrong."), r.ok?"#15803d":"#dc2626");
+    if(r.ok) authMode="signin";
+  }catch(e){ authMsg("Couldn't reach the server — try again in a moment.","#dc2626"); }
+}
+function inp(id,ph,type){ return '<input id="'+id+'" type="'+(type||"text")+'" placeholder="'+ph+'" style="width:100%;box-sizing:border-box;padding:11px;border:1px solid #e2e8f0;border-radius:10px;font-size:15px;margin-bottom:8px" onkeydown="if(event.key===&quot;Enter&quot;)'+(authMode==="signin"?"doLogin":"doSignup")+'()">'; }
 function accessCardHtml(){
-  if(BACKEND) return '<p style="color:#7c2d12;font-weight:700;margin:0 0 10px">🗝️ Request access</p>'+
-    '<input id="reqName" placeholder="Your name" style="width:100%;box-sizing:border-box;padding:11px;border:1px solid #e2e8f0;border-radius:10px;font-size:15px;margin-bottom:8px">'+
-    '<input id="reqEmail" type="email" placeholder="Your email" style="width:100%;box-sizing:border-box;padding:11px;border:1px solid #e2e8f0;border-radius:10px;font-size:15px" onkeydown="if(event.key===&quot;Enter&quot;)requestAccess()">'+
-    '<button onclick="requestAccess()" style="width:100%;margin-top:10px;padding:12px;border:none;border-radius:10px;background:linear-gradient(120deg,#f97316,#ea580c);color:#fff;font-size:15px;font-weight:700;cursor:pointer">Request Access</button>'+
-    '<p id="gateMsg" style="font-size:13px;margin:8px 0 0;min-height:16px;color:#64748b"></p>'+
-    '<p style="color:#94a3b8;font-size:12px;margin:6px 0 0">Your facilitator approves each request. Already approved? Open the access link you were emailed — it signs this device in.</p>';
-  return '<p style="color:#7c2d12;font-weight:700;margin:0 0 10px">🗝️ Invite-only access</p>'+
+  if(!BACKEND) return '<p style="color:#7c2d12;font-weight:700;margin:0 0 10px">🗝️ Invite-only access</p>'+
     '<input id="gateCode" placeholder="Enter your access code" style="width:100%;box-sizing:border-box;padding:12px;border:1px solid #e2e8f0;border-radius:10px;font-size:15px;text-align:center;letter-spacing:.05em" onkeydown="if(event.key===&quot;Enter&quot;)gateTry()">'+
     '<button onclick="gateTry()" style="width:100%;margin-top:10px;padding:12px;border:none;border-radius:10px;background:linear-gradient(120deg,#f97316,#ea580c);color:#fff;font-size:15px;font-weight:700;cursor:pointer">Enter Workspace</button>'+
     '<p id="gateMsg" style="color:#dc2626;font-size:13px;margin:8px 0 0;min-height:16px"></p>'+
     '<p style="color:#94a3b8;font-size:12px;margin:6px 0 0">Ask your facilitator for a code</p>';
+  const tab=(m,label)=>'<button onclick="setAuthMode(&quot;'+m+'&quot;)" style="flex:1;padding:8px;border:none;border-bottom:2px solid '+(authMode===m?'#ea580c':'#e2e8f0')+';background:none;font-weight:700;font-size:14px;color:'+(authMode===m?'#7c2d12':'#94a3b8')+';cursor:pointer">'+label+'</button>';
+  const btn=(fn,label)=>'<button onclick="'+fn+'()" style="width:100%;margin-top:10px;padding:12px;border:none;border-radius:10px;background:linear-gradient(120deg,#f97316,#ea580c);color:#fff;font-size:15px;font-weight:700;cursor:pointer">'+label+'</button>';
+  let h='<div style="display:flex;gap:6px;margin-bottom:14px">'+tab("signin","Sign In")+tab("signup","Create Account")+'</div>';
+  if(authMode==="signup") h+=inp("authName","Your name");
+  h+=inp("authEmail","Email","email")+inp("authPw","Password","password");
+  h+=(authMode==="signin"?btn("doLogin","Sign In"):btn("doSignup","Create Account"));
+  h+='<p id="authMsg" style="font-size:13px;margin:8px 0 0;min-height:16px;color:#64748b"></p>';
+  h+='<p style="color:#94a3b8;font-size:12px;margin:6px 0 0">'+(authMode==="signin"?"New here? Create an account — your facilitator approves it before you can sign in.":"New accounts are approved by your facilitator before first sign-in.")+'</p>';
+  return h;
 }
 async function initGate(){
   try{
@@ -1932,7 +1953,7 @@ function landingHtml(){
     '<div style="font-size:13px;font-weight:700;letter-spacing:.22em;opacity:.85">HORIZONS OF HOPE</div>'+
     '<h1 style="font-size:clamp(30px,5vw,52px);font-weight:800;letter-spacing:-.03em;margin:14px auto 0;max-width:760px;line-height:1.12">Every client, every dollar,<br>every goal.</h1>'+
     '<p style="font-size:17px;opacity:.92;max-width:640px;margin:18px auto 0;line-height:1.6">A complete workspace for Independent Facilitators in California&#39;s Self-Determination Program — clients, budgets, spending plans, goals, compliance, and documents in one place.</p>'+
-    '<div style="background:#fff;border-radius:16px;padding:22px;max-width:400px;margin:30px auto 0;box-shadow:0 16px 50px rgba(0,0,0,.3)">'+
+    '<div id="authCard" style="background:#fff;border-radius:16px;padding:22px;max-width:400px;margin:30px auto 0;box-shadow:0 16px 50px rgba(0,0,0,.3)">'+
       accessCardHtml()+
     '</div>'+
     '<p style="font-size:13px;opacity:.75;margin-top:22px">Your data never leaves your browser · Works with Google Docs, Sheets &amp; Slides</p>'+
@@ -1953,6 +1974,386 @@ function landingHtml(){
   '</div>'+
   '<div style="background:#0f172a;color:#94a3b8;text-align:center;padding:26px;font-size:13px">Built with care by <strong style="color:#e2e8f0">Horizons of Hope</strong> · All data stays in your browser — nothing is sent to a server</div>'+
   '</div>';
+}
+</script>
+
+<script>
+/* ================= GUIDED SPENDING PLAN BUILDER ================= */
+const EMP_RATES={ss:0.062,ssCap:184500,med:0.0145,futa:0.006,futaBase:7000,ui:0.034,uiBase:7000,ett:0.001,ettBase:7000,wc:0.10,sick:0};
+function spCat(code){const n=+code; if(n>=310&&n<=330)return"Living Arrangement"; if(n>=331&&n<=355)return"Employment & Community Participation"; return"Health & Safety";}
+const FMS_SCHEDULE={ "Bill Payer (315)":[255,495,760], "Co-Employer (316)":[420,660,925], "Sole Employer (317)":[420,660,925] };
+const FMS_TIERS=["0–4","5–10","11+"];
+function spStore(c){ if(!c.splan) c.splan={budget:c.budget||0,rates:{...EMP_RATES},workers:[],items:[],fms:0,cert:{}}; if(!c.splan.rates)c.splan.rates={...EMP_RATES};
+  if(!c.splan.rateBasis) c.splan.rateBasis="wage";
+  if(!c.splan.burdenMethod) c.splan.burdenMethod="detailed";
+  if(c.splan.flatPct===undefined) c.splan.flatPct=0.25;
+  if(c.splan.flatInclFms===undefined) c.splan.flatInclFms=true;
+  if(!c.splan.fmsModel) c.splan.fmsModel="Co-Employer (316)";
+  if(!c.splan.fmsSchedule) c.splan.fmsSchedule=JSON.parse(JSON.stringify(FMS_SCHEDULE));
+  return c.splan; }
+function fmsCount(c){ const sp=spStore(c); if(sp.fmsCountOverride!==undefined&&sp.fmsCountOverride!=="") return +sp.fmsCountOverride||0; return sp.workers.filter(w=>(+w.wage||0)>0).length; }
+function fmsTierIndex(n){ return n<=4?0:(n<=10?1:2); }
+function fmsMonthly(c){ const sp=spStore(c); const sched=sp.fmsSchedule[sp.fmsModel]||[0,0,0]; return sched[fmsTierIndex(fmsCount(c))]||0; }
+function fmsAnnual(c){ const sp=spStore(c); if(sp.burdenMethod==="flat"&&sp.flatInclFms) return 0; return fmsMonthly(c)*12; }
+function trueWagePerHr(w,sp){
+  const entered=+w.wage||0;
+  if(!sp||sp.rateBasis!=="loaded") return entered;
+  const hrs=+w.hrs||0, weeks=+w.weeks||0, totalUnits=hrs*weeks;
+  if(sp.burdenMethod==="flat"){ const pf=+sp.flatPct||0; return entered/(1+pf); }
+  if(totalUnits<=0) return entered;
+  const rt=(sp&&sp.rates)?sp.rates:EMP_RATES;
+  const loadedAnnual=entered*totalUnits;
+  const k=rt.ss+rt.med+rt.wc+rt.sick, cap=rt.futa+rt.ui+rt.ett, base=7000;
+  let Wsmall=loadedAnnual/(1+k+cap);
+  if(Wsmall<=base) return Wsmall/totalUnits;
+  let Wbig=(loadedAnnual-base*cap)/(1+k);
+  return Wbig/totalUnits;
+}
+function loadedCost(w,sp){
+  const rt=(sp&&sp.rates)?sp.rates:(sp||EMP_RATES);
+  const wph=trueWagePerHr(w,sp);
+  const wages=wph*(+w.hrs||0)*(+w.weeks||0);
+  if(!wages) return {wages:0,burden:0,loaded:0,pct:0};
+  if(sp&&sp.burdenMethod==="flat"){ const pf=+sp.flatPct||0; const burden=wages*pf; return {wages,burden,loaded:wages+burden,pct:pf,ss:0,med:0,futa:0,ui:0,ett:0,wc:burden,sick:0}; }
+  const ss=(rt.ssCap?Math.min(wages,rt.ssCap):wages)*rt.ss;
+  const med=wages*rt.med;
+  const futa=Math.min(wages,rt.futaBase)*rt.futa;
+  const ui=Math.min(wages,rt.uiBase)*rt.ui;
+  const ett=Math.min(wages,rt.ettBase)*rt.ett;
+  const wc=wages*rt.wc, sick=wages*rt.sick;
+  const burden=ss+med+futa+ui+ett+wc+sick;
+  return {wages,burden,loaded:wages+burden,pct:burden/wages,ss,med,futa,ui,ett,wc,sick};
+}
+function itemAmount(it){
+  if(it.rate!==undefined && it.rate!=="" && it.rate!==null){
+    const u=(+it.units||0)*(+it.freq||0)*(+it.rate||0); return u+(+it.adj||0);
+  }
+  return +it.amount||0;
+}
+function rcWorkerRow(c,w){
+  const sp=spStore(c), lc=loadedCost(w,sp);
+  const totalUnits=(+w.hrs||0)*(+w.weeks||0);
+  const empPerUnit=totalUnits>0?lc.burden/totalUnits:0;
+  const adj=+w.adj||0;
+  const wph=trueWagePerHr(w,sp);
+  return {desc:(w.name||"Worker"),code:w.code||"320",units:(+w.hrs||0),unitType:(w.unitType||"Hours"),
+    freqType:(w.freqType||"Week"),freq:(+w.weeks||0),totalUnits,rate:wph,
+    empCost:empPerUnit,adjRate:wph+empPerUnit,adj,amount:lc.loaded+adj};
+}
+function rcItemRow(c,it){
+  const hasUnit=(it.rate!==undefined&&it.rate!==""&&it.rate!==null);
+  const units=hasUnit?(+it.units||0):1;
+  const freq=hasUnit?(+it.freq||0):1;
+  const rate=hasUnit?(+it.rate||0):(+it.amount||0);
+  const totalUnits=units*freq;
+  const adj=+it.adj||0;
+  return {desc:(it.desc||""),code:it.code||"",units,unitType:(it.unitType||(hasUnit?"Each":"Lump sum")),
+    freqType:(it.freqType||"Year"),freq,totalUnits,rate,empCost:0,adjRate:rate,adj,amount:itemAmount(it)};
+}
+function splanTotals(c){
+  const sp=spStore(c);
+  const wTot=sp.workers.reduce((s,w)=>s+rcWorkerRow(c,w).amount,0);
+  const iTot=sp.items.reduce((s,i)=>s+itemAmount(i),0);
+  const fms=fmsAnnual(c);
+  const total=wTot+iTot+fms;
+  return {wTot,iTot,fms,total,budget:+sp.budget||0,remaining:(+sp.budget||0)-total};
+}
+function renderSplan(){
+  const el=document.getElementById("view-splan");
+  let html=`<h2>Guided Spending Plan Builder</h2><p class="hint">Build a compliant SDP spending plan step by step — including the true cost of employed workers (wages + employer taxes + workers' comp) — then generate a submittable document. For heavy payroll math, the <a href="SDP-Spending-Plan-Builder.xlsx">Excel workbook</a> mirrors this (opens in Google Sheets).</p>${pickerHtml("splan")}`;
+  const c=getClient(picked.splan);
+  if(c){
+    const sp=spStore(c); const t=splanTotals(c);
+    /* STEP 1: budget */
+    html+=`<div class="card"><h3 class="mt0">Step 1 · Certified individual budget</h3>
+    <div class="row"><div><label>Annual budget ($)</label><input type="number" value="${sp.budget||''}" onchange="spField('${c.id}','budget',this.value)"></div>
+    <div><label>Plan year</label><input value="${esc(c.planStart||'')} → ${esc(c.planEnd||'')}" disabled></div></div>
+    <p class="muted">This comes from the RC certification (or the Budget tab). The plan total must not exceed it.</p></div>`;
+    html+=splanImportCard(c);
+    /* STEP 2: workers with burden */
+    const flatOn=(sp.burdenMethod==="flat"); const flatPctN=Math.round((+sp.flatPct||0)*100);
+    html+=`<div class="card"><h3 class="mt0">Step 2 · Employed workers (fully-loaded cost)</h3>
+    <div class="row" style="align-items:flex-end">
+      <div><label>Employer cost method</label><select onchange="spField('${c.id}','burdenMethod',this.value)">
+        <option value="detailed" ${flatOn?'':'selected'}>Detailed — calculate actual employer taxes</option>
+        <option value="flat" ${flatOn?'selected':''}>Flat % (e.g. Cambrian 25%)</option></select></div>
+      <div><label>The $/hr you enter is</label><select onchange="spField('${c.id}','rateBasis',this.value)">
+        <option value="wage" ${sp.rateBasis==='loaded'?'':'selected'}>Worker wage → add burden</option>
+        <option value="loaded" ${sp.rateBasis==='loaded'?'selected':''}>Budget rate → back out wage</option></select></div>
+      ${flatOn?`<div><label>Flat % on wages</label><input type="number" step="0.01" value="${sp.flatPct}" onchange="spField('${c.id}','flatPct',this.value)"><div class="muted" style="font-size:11px">${flatPctN}% added to wages</div></div>
+      <div style="flex:2"><label style="display:flex;gap:6px;align-items:center;font-weight:400;font-size:13px"><input type="checkbox" ${sp.flatInclFms?'checked':''} onchange="spField('${c.id}','flatInclFms',this.checked)" style="width:16px;height:16px"> This % also covers the FMS fee (no separate FMS line)</label></div>`:''}
+    </div>
+    <p class="muted">${flatOn?('Flat method: each worker\'s employer cost = wages × '+flatPctN+'%'+(sp.flatInclFms?', which also absorbs the FMS fee — matching how Cambrian presents budgets.':'.')):"Detailed method: the app adds actual employer taxes + workers' comp to each worker's wages."}</p>
+    ${sp.rateBasis==='loaded'?`<p class="muted" style="color:var(--blue-dark)">Budget-rate mode: the $/hr you type is the total the budget pays per hour (the Adjusted Rate). The app backs out the actual wage to pay the worker (shown under each rate) so the loaded cost equals what you entered.</p>`:''}
+    <table><tr><th>Worker</th><th>Code</th><th>$/hr</th><th>Hrs/wk</th><th>Wks/yr</th><th class="right">Wages</th><th class="right">+Employer cost</th><th>1-time $</th><th class="right">Line total</th><th></th></tr>`;
+    sp.workers.forEach((w,i)=>{
+      const lc=loadedCost(w,sp); const rc=rcWorkerRow(c,w);
+      html+=`<tr><td><input value="${esc(w.name||'')}" style="width:110px" onchange="spWorker('${c.id}',${i},'name',this.value)"></td>
+      <td><input value="${esc(w.code||'')}" style="width:52px" placeholder="320" onchange="spWorker('${c.id}',${i},'code',this.value)"></td>
+      <td><input type="number" value="${w.wage||''}" style="width:60px" onchange="spWorker('${c.id}',${i},'wage',this.value)">${sp.rateBasis==='loaded'?`<div class="muted" style="font-size:11px">pays ${money(trueWagePerHr(w,sp))}/hr</div>`:''}</td>
+      <td><input type="number" value="${w.hrs||''}" style="width:50px" onchange="spWorker('${c.id}',${i},'hrs',this.value)"></td>
+      <td><input type="number" value="${w.weeks||''}" style="width:50px" onchange="spWorker('${c.id}',${i},'weeks',this.value)"></td>
+      <td class="right">${money(lc.wages)}</td><td class="right">${money(lc.burden)}<div class="muted" style="font-size:11px">${Math.round(lc.pct*100)}%</div></td>
+      <td><input type="number" value="${w.adj||''}" style="width:64px" placeholder="0" onchange="spWorker('${c.id}',${i},'adj',this.value)"></td>
+      <td class="right"><strong>${money(rc.amount)}</strong></td>
+      <td><span class="del-x" onclick="spDelWorker('${c.id}',${i})">✕</span></td></tr>`;
+    });
+    html+=`<tr><td colspan="7" class="right"><strong>Workers total (loaded)</strong></td><td class="right"><strong>${money(t.wTot)}</strong></td><td></td></tr></table>
+    <button class="btn small" onclick="spAddWorker('${c.id}')">+ Add worker</button>
+    ${flatOn?"":`<details style="margin-top:10px"><summary>Employer cost rates (2026 CA defaults — edit if your FMS differs)</summary><div class="row">
+      ${[['ss','Social Security','%'],['med','Medicare','%'],['futa','FUTA','%'],['ui','CA UI','%'],['ett','ETT','%'],['wc','Workers comp','%'],['sick','Sick/benefits','%']].map(([k,l])=>`<div><label>${l}</label><input type="number" step="0.001" value="${sp.rates[k]}" onchange="spRate('${c.id}','${k}',this.value)"></div>`).join('')}
+    </div><p class="muted">FUTA/UI/ETT apply only to each worker's first $7,000. CA SDI is employee-withheld, so it's excluded. FMS remits all of these — the plan still budgets them.</p></details>`}</div>`;
+    /* STEP 3: other services */
+    html+=`<div class="card"><h3 class="mt0">Step 3 · Other goods &amp; services (non-employee)</h3>
+    <p class="muted">Enter unit-based services (e.g. 76 swim sessions × $94.26) with # units, type, frequency &amp; rate — or leave those blank and type a flat annual amount in the last column.</p>
+    <table><tr><th>Code</th><th>Description / provider</th><th># units</th><th>Type</th><th>Freq/yr</th><th>Rate</th><th>1-time</th><th class="right">Amount</th><th></th></tr>`;
+    sp.items.forEach((it,i)=>{
+      const amt=itemAmount(it);
+      html+=`<tr><td><input value="${esc(it.code||'')}" style="width:48px" placeholder="331" onchange="spItem('${c.id}',${i},'code',this.value)"></td>
+      <td><input value="${esc(it.desc||'')}" style="width:150px" placeholder="provider / service" onchange="spItem('${c.id}',${i},'desc',this.value)"></td>
+      <td><input type="number" value="${it.units!==''&&it.units!==undefined?it.units:''}" style="width:52px" onchange="spItem('${c.id}',${i},'units',this.value)"></td>
+      <td><input value="${esc(it.unitType||'')}" style="width:64px" placeholder="Sessions" onchange="spItem('${c.id}',${i},'unitType',this.value)"></td>
+      <td><input type="number" value="${it.freq!==''&&it.freq!==undefined?it.freq:''}" style="width:46px" onchange="spItem('${c.id}',${i},'freq',this.value)"></td>
+      <td><input type="number" value="${it.rate!==''&&it.rate!==undefined?it.rate:''}" style="width:64px" placeholder="rate" onchange="spItem('${c.id}',${i},'rate',this.value)"></td>
+      <td><input type="number" value="${it.adj||''}" style="width:56px" placeholder="0" onchange="spItem('${c.id}',${i},'adj',this.value)"></td>
+      <td class="right">${it.rate!==''&&it.rate!==undefined&&it.rate!==null?money(amt):'<input type="number" value="'+(it.amount||'')+'" style="width:80px" placeholder="flat $" onchange="spItem(\''+c.id+'\','+i+',\'amount\',this.value)">'}</td>
+      <td><span class="del-x" onclick="spDelItem('${c.id}',${i})">✕</span></td></tr>`;
+    });
+    html+=`<tr><td colspan="7" class="right"><strong>Services total</strong></td><td class="right"><strong>${money(sp.items.reduce((s,x)=>s+itemAmount(x),0))}</strong></td><td></td></tr></table>
+    <button class="btn small" onclick="spAddItem('${c.id}')">+ Add service</button></div>`;
+    /* STEP 4: FMS + totals */
+    const cls=t.total>t.budget&&t.budget>0?'red':(t.budget>0?'green':'');
+    const fmMonthly=fmsMonthly(c), fmCount=fmsCount(c), fmTier=FMS_TIERS[fmsTierIndex(fmCount)];
+    const fmsInPct=(sp.burdenMethod==="flat"&&sp.flatInclFms);
+    html+=`<div class="card"><h3 class="mt0">Step 4 · FMS fee &amp; budget check</h3>
+    ${fmsInPct?'<div class="alert blue">FMS fee is included in the '+Math.round((+sp.flatPct||0)*100)+'% flat rate from Step 2 — no separate FMS line is added.</div>':''}
+    <div class="row">
+      <div><label>FMS model</label><select onchange="spField('${c.id}','fmsModel',this.value)">${Object.keys(sp.fmsSchedule).map(m=>`<option ${sp.fmsModel===m?'selected':''}>${m}</option>`).join('')}</select></div>
+      <div><label>Employees/providers</label><input type="number" value="${sp.fmsCountOverride!==undefined?sp.fmsCountOverride:''}" placeholder="${fmCount} (auto)" onchange="spField('${c.id}','fmsCountOverride',this.value)"><div class="muted" style="font-size:11px">auto-counts Step 2 workers; type to override</div></div>
+      <div><label>Tier</label><input value="${fmTier} → ${money(fmMonthly)}/mo" disabled></div>
+      <div><label>FMS annual (×12)</label><input value="${money(fmMonthly*12)}" disabled></div>
+    </div>
+    <details style="margin-top:6px"><summary>FMS rate schedule (official tiers — edit if your vendor or DDS differs)</summary><div>
+    <table><tr><th>Model</th><th>0–4</th><th>5–10</th><th>11+</th></tr>
+    ${Object.keys(sp.fmsSchedule).map(m=>`<tr><td>${m}</td>${[0,1,2].map(ti=>`<td><input type="number" style="width:72px" value="${sp.fmsSchedule[m][ti]}" onchange="spFmsRate('${c.id}','${m}',${ti},this.value)"></td>`).join('')}</tr>`).join('')}
+    </table><p class="muted">Flat monthly fees per the DDS SDP FMS rate schedule, tiered by number of employees/providers (single one-time goods purchases don't count). Confirm current rates with your FMS vendor. Independent-purchase-only plans may use a lower flat rate.</p></div></details>
+    <table><tr><td>Workers (loaded)</td><td class="right">${money(t.wTot)}</td></tr>
+    <tr><td>Other services</td><td class="right">${money(t.iTot)}</td></tr>
+    <tr><td>FMS (${esc(sp.fmsModel)}, ${fmCount} workers)</td><td class="right">${money(t.fms)}</td></tr>
+    <tr><td><strong>Spending plan total</strong></td><td class="right"><strong>${money(t.total)}</strong></td></tr>
+    <tr><td>Individual budget</td><td class="right">${money(t.budget)}</td></tr>
+    <tr><td><strong>Remaining</strong></td><td class="right"><strong style="color:${t.remaining<0?'var(--red)':'inherit'}">${money(t.remaining)}</strong></td></tr></table>
+    <div class="alert ${t.budget<=0?'blue':(t.total>t.budget?'red':(Math.abs(t.remaining)<1?'green':'amber'))}">${t.budget<=0?'Enter the certified budget in Step 1.':(t.total>t.budget?'✘ Plan is OVER budget by '+money(t.total-t.budget)+' — trim it so it balances.':(Math.abs(t.remaining)<1?'✔ Balanced — the plan disperses the full budget ('+money(t.budget)+').':'▲ '+money(t.remaining)+' still to allocate — disperse the rest so the plan balances to '+money(t.budget)+'.'))}</div>
+    <p class="muted">Independent Facilitator (code 340) is paid by the RC outside the budget — don't include it here.</p></div>`;
+    /* STEP 5: generate */
+    /* live combined preview — all RC columns on the page */
+    {
+      const catR={"Living Arrangement":[],"Employment & Community Participation":[],"Health & Safety":[]};
+      sp.workers.forEach(w=>{ const r=rcWorkerRow(c,w); if(r.amount>0) catR[spCat(w.code||'320')].push(r); });
+      sp.items.forEach(it=>{ const r=rcItemRow(c,it); if(r.amount>0) catR[spCat(it.code||'356')].push(r); });
+      const cols=["Code","Description / Provider","# Units","Type","Freq/yr","Total Yearly Units","Rate","Employer Cost","Adjusted Rate","1-Time Fees","Amount (12 mo)"];
+      let any=Object.values(catR).some(a=>a.length);
+      html+=`<div class="card"><h3 class="mt0">Plan at a glance — full detail</h3>`;
+      if(!any) html+=`<p class="muted">Add workers (Step 2) or services (Step 3) and the full spending plan — with units, rate, employer cost, adjusted rate and amount — appears here automatically.</p>`;
+      else {
+        html+=`<div style="overflow-x:auto"><table style="font-size:12px;min-width:820px"><tr>${cols.map(x=>`<th>${x}</th>`).join('')}</tr>`;
+        Object.keys(catR).forEach(cat=>{
+          if(!catR[cat].length) return;
+          html+=`<tr><td colspan="11" style="background:var(--blue-light);font-weight:600">${cat}</td></tr>`;
+          let sub=0;
+          catR[cat].forEach(r=>{
+            html+=`<tr><td>${esc(r.code)}</td><td>${esc(r.desc)}</td><td>${r.units||''}</td><td>${esc(r.unitType)}</td><td>${r.freq||''}</td><td>${r.totalUnits||''}</td><td class="right">${money(r.rate)}</td><td class="right">${money(r.empCost)}</td><td class="right">${money(r.adjRate)}</td><td class="right">${money(r.adj)}</td><td class="right"><strong>${money(r.amount)}</strong></td></tr>`;
+            sub+=r.amount;
+          });
+          html+=`<tr><td colspan="10" class="right"><strong>${cat} subtotal</strong></td><td class="right"><strong>${money(sub)}</strong></td></tr>`;
+        });
+        const fmMon=fmsMonthly(c);
+        html+=`<tr><td colspan="11" style="background:var(--blue-light);font-weight:600">Required program lines</td></tr>
+        <tr><td>${esc((sp.fmsModel.match(/(3\d\d)/)||['','316'])[1])}</td><td>FMS — ${esc(sp.fmsModel)} (${fmsCount(c)} workers)</td><td></td><td>Monthly</td><td>12</td><td>12</td><td class="right">${money(fmMon)}</td><td></td><td class="right">${money(fmMon)}</td><td></td><td class="right"><strong>${money(fmsAnnual(c))}</strong></td></tr>
+        <tr><td>340</td><td class="muted">Independent Facilitator — paid by RC outside the budget</td><td colspan="8"></td><td class="right muted">n/a</td></tr>
+        <tr><td colspan="10" class="right"><strong>SPENDING PLAN TOTAL</strong></td><td class="right"><strong>${money(t.total)}</strong></td></tr>
+        </table></div>`;
+      }
+      html+=`</div>`;
+    }
+    html+=`<div class="card"><h3 class="mt0">Step 5 · Generate the spending plan</h3>
+    <button class="btn secondary" onclick="spPreview('${c.id}')">👁 Preview</button>
+    <button class="btn" onclick="spPrint('${c.id}')">🖨 Print / Save as PDF</button>
+    <button class="btn secondary" onclick="spCopyForDocs('${c.id}')">📋 Copy for Google Docs</button>
+    <button class="btn secondary" onclick="spToBudget('${c.id}')">➕ Send lines to Budget tab</button>
+    <button class="btn" onclick="rcTemplateXlsx('${c.id}')">📊 Regional Center template (.xlsx)</button>
+    <p class="muted" style="margin-top:6px">The .xlsx matches the RC spending plan columns (units, rate, employer cost, adjusted rate, amount) and opens in Google Sheets.</p></div>`;
+  }
+  el.innerHTML=html;
+}
+function spField(cid,k,v){ const c=getClient(cid); spStore(c)[k]=(k==='budget'||k==='fms'||k==='flatPct')?(+v||0):v; save(); renderSplan(); if(k==='budget')renderDashboard(); }
+function spFmsRate(cid,model,tier,v){ const c=getClient(cid); const sp=spStore(c); sp.fmsSchedule[model][tier]=+v||0; save(); renderSplan(); }
+function spRate(cid,k,v){ const c=getClient(cid); spStore(c).rates[k]=+v||0; save(); renderSplan(); }
+function spAddWorker(cid){ const c=getClient(cid); spStore(c).workers.push({name:'',code:'320',wage:'',hrs:'',weeks:52,unitType:'Hours',freqType:'Week',adj:0}); save(); renderSplan(); }
+function spWorker(cid,i,k,v){ const c=getClient(cid); const w=spStore(c).workers[i]; w[k]=(['wage','hrs','weeks','adj'].includes(k))?(+v||0):v; save(); renderSplan(); }
+function spDelWorker(cid,i){ const c=getClient(cid); spStore(c).workers.splice(i,1); save(); renderSplan(); }
+function spAddItem(cid){ const c=getClient(cid); spStore(c).items.push({code:'',desc:'',units:1,unitType:'Each',freq:1,rate:'',adj:0,amount:''}); save(); renderSplan(); }
+function spItem(cid,i,k,v){ const c=getClient(cid); const it=spStore(c).items[i]; it[k]=(['amount','units','freq','rate','adj'].includes(k))?(v===''?'':(+v||0)):v; save(); renderSplan(); }
+function spDelItem(cid,i){ const c=getClient(cid); spStore(c).items.splice(i,1); save(); renderSplan(); }
+function spPlanHtml(c){
+  const sp=spStore(c); const t=splanTotals(c);
+  const cats={"Living Arrangement":[],"Employment & Community Participation":[],"Health & Safety":[]};
+  sp.workers.forEach(w=>{ const lc=loadedCost(w,sp); if(lc.loaded>0) cats[spCat(w.code||'320')].push([w.code||'320',(w.name||'Worker')+" — "+(w.hrs)+" hr/wk @ "+money(w.wage)+"/hr (fully loaded, incl. employer taxes)",lc.loaded]); });
+  sp.items.forEach(i=>{ if(+i.amount>0) cats[spCat(i.code||'356')].push([i.code||'',i.desc||'',+i.amount]); });
+  let h=`<h1>SDP Spending Plan — ${esc(c.name)}</h1>
+  <p>Regional center: ${esc(c.rc||'—')} · Plan year ${esc(c.planStart||'____')} to ${esc(c.planEnd||'____')} · Prepared ${new Date().toLocaleDateString()}</p>
+  <p>Certified individual budget: <strong>${money(t.budget)}</strong></p>`;
+  const catRows={"Living Arrangement":[],"Employment & Community Participation":[],"Health & Safety":[]};
+  sp.workers.forEach(w=>{ const rc=rcWorkerRow(c,w); if(rc.amount>0) catRows[spCat(w.code||'320')].push(rc); });
+  sp.items.forEach(it=>{ const rc=rcItemRow(c,it); if(rc.amount>0) catRows[spCat(it.code||'356')].push(rc); });
+  const cols=["Code","Description / Provider","# Units","Type","Freq/yr","Total Yearly Units","Rate","Employer Cost","Adjusted Rate","1-Time Fees","Amount (12 mo)"];
+  Object.keys(catRows).forEach(cat=>{
+    if(!catRows[cat].length) return;
+    const sub=catRows[cat].reduce((s,r)=>s+r.amount,0);
+    h+=`<h2>${cat}</h2><table style="font-size:11px"><tr>${cols.map(x=>`<th>${x}</th>`).join('')}</tr>`;
+    catRows[cat].forEach(r=>{
+      h+=`<tr><td>${esc(r.code)}</td><td>${esc(r.desc)}</td><td>${r.units||''}</td><td>${esc(r.unitType)}</td><td>${r.freq||''}</td><td>${r.totalUnits||''}</td><td>${money(r.rate)}</td><td>${money(r.empCost)}</td><td>${money(r.adjRate)}</td><td>${money(r.adj)}</td><td>${money(r.amount)}</td></tr>`;
+    });
+    h+=`<tr><td colspan="10" style="text-align:right"><strong>Subtotal</strong></td><td><strong>${money(sub)}</strong></td></tr></table>`;
+  });
+  h+=`<h2>Required program lines</h2><table><tr><td>${esc((sp.fmsModel.match(/(3\d\d)/)||['','316'])[1])}</td><td>Financial Management Services — ${esc(sp.fmsModel)} (${fmsCount(c)} employees/providers)</td><td>${money(t.fms)}</td></tr>
+  <tr><td>340</td><td>Independent Facilitator (paid by RC outside the budget)</td><td>n/a</td></tr></table>
+  <h2>Totals</h2><table>
+  <tr><td>Spending plan total</td><td><strong>${money(t.total)}</strong></td></tr>
+  <tr><td>Individual budget</td><td>${money(t.budget)}</td></tr>
+  <tr><td>Remaining</td><td>${money(t.remaining)}</td></tr>
+  <tr><td>Status</td><td><strong>${t.total<=t.budget&&t.budget>0?'Within budget':(t.budget>0?'OVER BUDGET':'—')}</strong></td></tr></table>
+  <p style="font-size:11px">Employed-worker amounts are fully loaded (wages + employer payroll taxes + workers' compensation), per the requirement to budget the full cost of a worker. This plan meets WIC §4685.8: each item addresses an IPP outcome, is not available from generic services, and is FFP-eligible. A copy is to be attached to the IPP.</p>`;
+  return h;
+}
+function spPrint(cid){ doPrint(spPlanHtml(getClient(cid))); }
+function rcTemplateXlsx(cid){
+  const c=getClient(cid); const sp=spStore(c); const t=splanTotals(c);
+  loadSheetJs().then(()=>{
+    const H=["DESCRIPTION/PROVIDER NAME","# OF UNITS","TYPE OF UNITS/FREQUENCY","FREQUENCY (# OF WEEKS/MONTHS/YEAR)","TOTAL YEARLY UNITS","RATE","EMPLOYER COST","ADJUSTED RATE","ADJUSTMENTS / ONE-TIME FEES","AMOUNT PAID IN 12 MO PERIOD"];
+    const aoa=[];
+    aoa.push(["SDP Spending Plan — "+(c.name||"")]);
+    aoa.push(["Regional Center: "+(c.rc||""),"UCI#:","","Plan Year: "+(c.planStart||"")+" to "+(c.planEnd||"")]);
+    aoa.push(["Certified Individual Budget:",t.budget]);
+    aoa.push([]);
+    const cats={"Living Arrangement (310-330)":[],"Employment & Community Participation (331-355)":[],"Health & Safety (356-399)":[]};
+    const key=code=>{const n=+code; return n>=310&&n<=330?"Living Arrangement (310-330)":(n>=331&&n<=355?"Employment & Community Participation (331-355)":"Health & Safety (356-399)");};
+    sp.workers.forEach(w=>{ const r=rcWorkerRow(c,w); if(r.amount>0) cats[key(w.code||'320')].push(r); });
+    sp.items.forEach(it=>{ const r=rcItemRow(c,it); if(r.amount>0) cats[key(it.code||'356')].push(r); });
+    let grand=0;
+    Object.keys(cats).forEach(cat=>{
+      aoa.push([cat]);
+      aoa.push(H);
+      let sub=0;
+      cats[cat].forEach(r=>{
+        aoa.push([r.desc, r.units||"", r.unitType, r.freqType+" ("+(r.freq||"")+")", r.totalUnits||"", round2(r.rate), round2(r.empCost), round2(r.adjRate), round2(r.adj), round2(r.amount)]);
+        sub+=r.amount;
+      });
+      aoa.push(["Subtotal","","","","","","","","",round2(sub)]);
+      aoa.push([]);
+      grand+=sub;
+    });
+    aoa.push(["Financial Management Services — "+sp.fmsModel+" ("+fmsCount(c)+" employees/providers)","","","Monthly x 12","","",fmsMonthly(c),"","",round2(fmsAnnual(c))]);
+    aoa.push(["Independent Facilitator (code 340) — paid by RC OUTSIDE the individual budget","","","","","","","","","n/a"]);
+    aoa.push([]);
+    aoa.push(["SPENDING PLAN TOTAL","","","","","","","","",round2(t.total)]);
+    aoa.push(["INDIVIDUAL BUDGET","","","","","","","","",round2(t.budget)]);
+    aoa.push(["REMAINING","","","","","","","","",round2(t.remaining)]);
+    aoa.push(["STATUS","","","","","","","","", t.total<=t.budget&&t.budget>0?"Within budget":(t.budget>0?"OVER BUDGET":"—")]);
+    const ws=XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols']=[{wch:42},{wch:9},{wch:16},{wch:20},{wch:12},{wch:11},{wch:13},{wch:12},{wch:14},{wch:16}];
+    const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Spending Plan");
+    XLSX.writeFile(wb,"SDP Spending Plan - "+sanitizeName(c.name)+".xlsx");
+  }).catch(()=>alert("Generating the spreadsheet needs an internet connection the first time (to load the spreadsheet engine). Try again when online, or use Print / Copy for Google Docs."));
+}
+function round2(n){ return Math.round((+n||0)*100)/100; }
+function spPreview(cid){ showPreview(spPlanHtml(getClient(cid)),null); }
+function spCopyForDocs(cid){
+  const c=getClient(cid); const tmp=document.createElement("div"); tmp.innerHTML=spPlanHtml(c);
+  const txt=tmp.innerText;
+  navigator.clipboard.writeText(txt).then(()=>alert("Spending plan copied. Open a Google Doc and paste — or paste into a Google Sheet for a table."));
+}
+function spToBudget(cid){
+  const c=getClient(cid); const sp=spStore(c);
+  if(!confirm("Add these spending plan lines to the Budget tab for tracking?")) return;
+  sp.workers.forEach(w=>{ const lc=loadedCost(w,sp); if(lc.loaded>0) c.plan.push({id:uid(),code:w.code||'320',cat:spCat(w.code||'320'),desc:(w.name||'Worker')+' (loaded)',annual:Math.round(lc.loaded*100)/100}); });
+  sp.items.forEach(i=>{ if(+i.amount>0) c.plan.push({id:uid(),code:i.code||'',cat:spCat(i.code||'356'),desc:i.desc||'',annual:+i.amount}); });
+  const fa=fmsAnnual(c); if(fa>0){ const fcode=(sp.fmsModel.match(/(3\d\d)/)||['','316'])[1]; c.plan.push({id:uid(),code:fcode,cat:'Living Arrangement',desc:'FMS ('+sp.fmsModel+') annual fee',annual:fa}); }
+  if(+sp.budget>0) c.budget=+sp.budget;
+  save(); renderBudget(); renderDashboard(); alert("Added to the Budget tab.");
+}
+</script>
+<script>
+/* ================= IMPORT EXISTING SPENDING PLAN (xlsx/csv/pdf) ================= */
+function splanImportCard(c){
+  return `<div class="card" style="background:var(--blue-light)"><h3 class="mt0">📥 Start from an existing spending plan</h3>
+  <p class="muted">Upload a current spending plan or authorization — <strong>.xlsx, .csv, or PDF</strong> — and the app reads the service codes and amounts into Step 3 below. CFMS/Regional-Center "Spending Summary" PDFs work too (it uses the authorized amount per code). Review and adjust after importing; move any employed-worker lines into Step 2 to recalculate their loaded cost.</p>
+  <div class="row"><div><label>Spending plan file</label><input type="file" accept=".xlsx,.xls,.csv,.pdf" onchange="splanImportFile('${c.id}',this)"></div></div>
+  <div id="splanImpMsg" class="muted"></div></div>`;
+}
+function splanImpMsg(txt,ok){ const el=document.getElementById("splanImpMsg"); if(el){ el.textContent=txt; el.style.color=ok?"var(--green)":"var(--muted)"; } }
+function splanAddImported(c,rows){
+  const sp=spStore(c); let added=0;
+  rows.forEach(r=>{
+    const code=String(r.code||"").match(/\b(3\d\d)\b/); const amt=+r.amount||0;
+    if(!amt) return;
+    sp.items.push({code:code?code[1]:"",desc:(r.desc||"").slice(0,80),amount:Math.round(amt*100)/100});
+    added++;
+  });
+  save(); renderSplan();
+  const msg=document.getElementById("splanImpMsg");
+  if(msg){ msg.textContent="✓ Imported "+added+" line(s) into Step 3. Review amounts, then move any worker lines up to Step 2 for loaded-cost calculation."; msg.style.color="var(--green)"; }
+}
+function splanImportFile(cid,input){
+  const f=input.files[0]; if(!f) return; const c=getClient(cid);
+  splanImpMsg("Reading "+f.name+"…",true);
+  if(/\.pdf$/i.test(f.name)){
+    loadPdfJs().then(()=>{
+      const r=new FileReader();
+      r.onload=async()=>{
+        try{
+          const pdf=await pdfjsLib.getDocument({data:new Uint8Array(r.result)}).promise;
+          let text=""; for(let i=1;i<=pdf.numPages;i++){ const pg=await pdf.getPage(i); const tc=await pg.getTextContent(); text+=tc.items.map(x=>x.str).join(" ")+"\n"; }
+          const parsed=(typeof parseSummaryPdf==="function")?parseSummaryPdf(text):null;
+          if(parsed&&parsed.rows&&parsed.rows.length){
+            if(parsed.budget && !spStore(c).budget){ spStore(c).budget=parsed.budget; }
+            splanAddImported(c, parsed.rows.map(x=>({code:x.code,desc:x.name,amount:x.authorized||x.used||0})));
+            return;
+          }
+          /* fallback: scan text for "CODE ... $amount" patterns */
+          const rows=[]; const re=/\b(3\d\d)\b[^$\n]{0,80}?\$([\d,]+\.\d\d)/g; let m;
+          while((m=re.exec(text))){ rows.push({code:m[1],desc:"code "+m[1],amount:+m[2].replace(/,/g,"")}); }
+          if(rows.length) splanAddImported(c,rows);
+          else splanImpMsg("Couldn't find service-code amounts in that PDF. If it's a scan, export the spreadsheet version instead.",false);
+        }catch(e){ splanImpMsg("Could not read that PDF ("+e.message+"). Try the spreadsheet version.",false); }
+      };
+      r.readAsArrayBuffer(f);
+    }).catch(()=>splanImpMsg("PDF reading needs internet the first time (to load the reader). Or upload a .csv/.xlsx.",false));
+    return;
+  }
+  const handleGrid=(grid)=>{
+    if(!grid||grid.length<2){ splanImpMsg("No rows found in that file.",false); return; }
+    const heads=grid[0].map(x=>String(x||"").toLowerCase());
+    const codeCol=heads.findIndex(x=>x.includes("code")||x.includes("service"));
+    let amtCol=heads.findIndex(x=>x.includes("authorized")||x.includes("annual")||x.includes("amount")||x.includes("total")||x.includes("cost"));
+    const descCol=heads.findIndex(x=>x.includes("desc")||x.includes("provider")||x.includes("service"));
+    const rows=[];
+    grid.slice(1).forEach(g=>{
+      const joined=g.map(x=>String(x)).join(" ");
+      const codeM=(codeCol>=0?String(g[codeCol]):joined).match(/\b(3\d\d)\b/);
+      let amt=null;
+      if(amtCol>=0) amt=(typeof parseAmount==="function")?parseAmount(g[amtCol]):parseFloat(String(g[amtCol]).replace(/[$,]/g,""));
+      if(!amt){ /* take the largest currency-looking number in the row */
+        const nums=g.map(x=>{const n=parseFloat(String(x).replace(/[$,]/g,""));return isNaN(n)?0:n;}); amt=Math.max(...nums,0);
+      }
+      if(codeM && amt>0) rows.push({code:codeM[1],desc:(descCol>=0?String(g[descCol]):"code "+codeM[1]),amount:amt});
+    });
+    if(rows.length) splanAddImported(c,rows);
+    else splanImpMsg("Couldn't match service codes + amounts. Make sure a column has codes (310–399) and another has dollar amounts.",false);
+  };
+  if(/\.csv$/i.test(f.name)){ const r=new FileReader(); r.onload=()=>handleGrid((typeof parseCSV==="function")?parseCSV(r.result):[]); r.readAsText(f); return; }
+  loadSheetJs().then(()=>{ const r=new FileReader(); r.onload=()=>{ try{ const wb=XLSX.read(new Uint8Array(r.result),{type:"array"}); handleGrid(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:true,defval:""})); }catch(e){ splanImpMsg("Could not read that spreadsheet: "+e.message,false); } }; r.readAsArrayBuffer(f); })
+    .catch(()=>splanImpMsg("Reading .xlsx needs internet the first time. Or save as .csv and upload that.",false));
 }
 </script>
 <script>renderAll();</script>
