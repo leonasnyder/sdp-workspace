@@ -1907,7 +1907,7 @@ async function doSignup(){
   }catch(e){ authMsg("Couldn't reach the server — try again in a moment.","#dc2626"); }
 }
 function inp(id,ph,type){ return '<input id="'+id+'" type="'+(type||"text")+'" placeholder="'+ph+'" style="width:100%;box-sizing:border-box;padding:11px;border:1px solid #e2e8f0;border-radius:10px;font-size:15px;margin-bottom:8px" onkeydown="if(event.key===&quot;Enter&quot;)'+(authMode==="signin"?"doLogin":"doSignup")+'()">'; }
-function pwInp(id,ph){ return '<div style="position:relative;margin-bottom:8px"><input id="'+id+'" type="password" placeholder="'+ph+'" style="width:100%;box-sizing:border-box;padding:11px;padding-right:56px;border:1px solid #e2e8f0;border-radius:10px;font-size:15px" onkeydown="if(event.key===&quot;Enter&quot;)'+(authMode==="signin"?"doLogin":"doSignup")+'()"><button type="button" onclick="togglePw(&quot;'+id+'&quot;,this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:#f97316;font-size:13px;font-weight:600;cursor:pointer">Show</button></div>'; }
+function pwInp(id,ph){ return '<div style="position:relative;margin-bottom:8px"><input id="'+id+'" type="password" placeholder="'+ph+'" style="width:100%;box-sizing:border-box;padding:11px;padding-right:56px;border:1px solid #e2e8f0;border-radius:10px;font-size:15px" onkeydown="if(event.key===&quot;Enter&quot;)'+(authMode==="signin"?"doLogin":"doSignup")+'()"><button type="button" onclick="togglePw(&quot;'+id+'&quot;,this)" style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:#dc2626;font-size:13px;font-weight:600;cursor:pointer">Show</button></div>'; }
 function togglePw(id,btn){ const el=document.getElementById(id); if(!el) return; if(el.type==="password"){ el.type="text"; btn.textContent="Hide"; } else { el.type="password"; btn.textContent="Show"; } }
 async function doForgot(){
   const em=(document.getElementById("authEmail")||{}).value||"";
@@ -1922,16 +1922,16 @@ async function doForgot(){
 function accessCardHtml(){
   if(!BACKEND) return '<p style="color:#020817;font-weight:700;margin:0 0 10px">🗝️ Invite-only access</p>'+
     '<input id="gateCode" placeholder="Enter your access code" style="width:100%;box-sizing:border-box;padding:12px;border:1px solid #e2e8f0;border-radius:10px;font-size:15px;text-align:center;letter-spacing:.05em" onkeydown="if(event.key===&quot;Enter&quot;)gateTry()">'+
-    '<button onclick="gateTry()" style="width:100%;margin-top:10px;padding:12px;border:none;border-radius:10px;background:#f97316;color:#fff;font-size:15px;font-weight:700;cursor:pointer">Enter Workspace</button>'+
+    '<button onclick="gateTry()" style="width:100%;margin-top:10px;padding:12px;border:none;border-radius:10px;background:linear-gradient(135deg,#dc2626,#f97316);color:#fff;font-size:15px;font-weight:700;cursor:pointer">Enter Workspace</button>'+
     '<p id="gateMsg" style="color:#dc2626;font-size:13px;margin:8px 0 0;min-height:16px"></p>'+
     '<p style="color:#94a3b8;font-size:12px;margin:6px 0 0">Ask your facilitator for a code</p>';
-  const tab=(m,label)=>'<button onclick="setAuthMode(&quot;'+m+'&quot;)" style="flex:1;padding:8px;border:none;border-bottom:2px solid '+(authMode===m?'#f97316':'#e2e8f0')+';background:none;font-weight:700;font-size:14px;color:'+(authMode===m?'#020817':'#94a3b8')+';cursor:pointer">'+label+'</button>';
-  const btn=(fn,label)=>'<button onclick="'+fn+'()" style="width:100%;margin-top:10px;padding:12px;border:none;border-radius:10px;background:#f97316;color:#fff;font-size:15px;font-weight:700;cursor:pointer">'+label+'</button>';
+  const tab=(m,label)=>'<button onclick="setAuthMode(&quot;'+m+'&quot;)" style="flex:1;padding:8px;border:none;border-bottom:2px solid '+(authMode===m?'#dc2626':'#e2e8f0')+';background:none;font-weight:700;font-size:14px;color:'+(authMode===m?'#020817':'#94a3b8')+';cursor:pointer">'+label+'</button>';
+  const btn=(fn,label)=>'<button onclick="'+fn+'()" style="width:100%;margin-top:10px;padding:12px;border:none;border-radius:10px;background:linear-gradient(135deg,#dc2626,#f97316);color:#fff;font-size:15px;font-weight:700;cursor:pointer">'+label+'</button>';
   let h='<div style="display:flex;gap:6px;margin-bottom:14px">'+tab("signin","Sign In")+tab("signup","Create Account")+'</div>';
   if(authMode==="signup") h+=inp("authName","Your name");
   h+=inp("authEmail","Email","email")+pwInp("authPw","Password");
   h+=(authMode==="signin"?btn("doLogin","Sign In"):btn("doSignup","Create Account"));
-  if(authMode==="signin") h+='<p style="text-align:right;margin:8px 0 0"><a href="#" onclick="doForgot();return false" style="color:#f97316;font-size:13px">Forgot password?</a></p>';
+  if(authMode==="signin") h+='<p style="text-align:right;margin:8px 0 0"><a href="#" onclick="doForgot();return false" style="color:#dc2626;font-size:13px">Forgot password?</a></p>';
   h+='<p id="authMsg" style="font-size:13px;margin:8px 0 0;min-height:16px;color:#64748b"></p>';
   h+='<p style="color:#94a3b8;font-size:12px;margin:6px 0 0">'+(authMode==="signin"?"New here? Create an account — your facilitator approves it before you can sign in.":"New accounts are approved by your facilitator before first sign-in.")+'</p>';
   return h;
@@ -1972,33 +1972,34 @@ async function initGate(){
 initGate();
 
 function landingHtml(){
-  const card=(icon,t,d)=>'<div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:24px;box-shadow:0 1px 3px rgba(2,8,23,.06)"><div style="font-size:30px">'+icon+'</div><h3 style="margin:10px 0 6px;color:#020817;font-size:17px">'+t+'</h3><p style="color:#64748b;font-size:14px;line-height:1.55;margin:0">'+d+'</p></div>';
-  const step=(n,t,d)=>'<div><div style="font-size:13px;font-weight:800;color:#f97316;letter-spacing:.1em">'+n+'</div><h3 style="margin:6px 0;color:#020817;font-size:17px">'+t+'</h3><p style="color:#64748b;font-size:14px;line-height:1.55;margin:0">'+d+'</p></div>';
+  const card=(icon,t,d)=>'<div style="background:#fff;border:1px solid #e5e7eb;border-radius:24px;padding:28px;box-shadow:0 1px 3px rgba(0,0,0,.06)"><div style="width:48px;height:48px;border-radius:16px;background:linear-gradient(135deg,#ef4444,#f97316);display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:0 4px 10px rgba(239,68,68,.3)">'+icon+'</div><h3 style="margin:16px 0 6px;color:#111827;font-size:18px;font-weight:700">'+t+'</h3><p style="color:#4b5563;font-size:14px;line-height:1.6;margin:0">'+d+'</p></div>';
+  const step=(n,t,d)=>'<div style="display:flex;gap:20px;align-items:flex-start;background:#fff;border:1px solid #f3f4f6;border-radius:16px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,.05)"><span style="font-size:40px;font-weight:900;color:#fecaca;line-height:1;flex-shrink:0">'+n+'</span><div><h3 style="margin:0 0 4px;color:#111827;font-size:17px;font-weight:700">'+t+'</h3><p style="color:#6b7280;font-size:14px;line-height:1.6;margin:0">'+d+'</p></div></div>';
   return '<div style="font-family:Inter,-apple-system,sans-serif;background:#fff">'+
-  '<div style="background:#ffffff;color:#020817;padding:64px 24px 56px;text-align:center;border-bottom:1px solid #f1f5f9">'+
-    '<div style="font-size:13px;font-weight:700;letter-spacing:.22em;color:#f97316">HORIZONS OF HOPE</div>'+
-    '<h1 style="font-size:clamp(30px,5vw,52px);font-weight:800;letter-spacing:-.03em;margin:14px auto 0;max-width:760px;line-height:1.12;color:#020817">Every client, every dollar,<br>every goal.</h1>'+
-    '<p style="font-size:17px;color:#64748b;max-width:640px;margin:18px auto 0;line-height:1.6">A complete workspace for Independent Facilitators in California&#39;s Self-Determination Program — clients, budgets, spending plans, goals, compliance, and documents in one place.</p>'+
-    '<div id="authCard" style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:22px;max-width:400px;margin:30px auto 0;box-shadow:0 10px 40px rgba(2,8,23,.12)">'+
-      accessCardHtml()+
-    '</div>'+
-    '<p style="font-size:13px;color:#94a3b8;margin-top:22px">Your data never leaves your browser · Works with Google Docs, Sheets &amp; Slides</p>'+
+  '<div style="position:relative;background:linear-gradient(135deg,#0f0a0a 0%,#1a0505 30%,#7f1d1d 65%,#c2410c 100%);color:#fff;padding:72px 24px 96px;text-align:center;overflow:hidden">'+
+    '<div style="position:absolute;top:15%;left:12%;width:340px;height:340px;border-radius:50%;opacity:.2;filter:blur(70px);background:radial-gradient(circle,#ef4444,transparent);pointer-events:none"></div>'+
+    '<div style="position:absolute;bottom:14%;right:12%;width:300px;height:300px;border-radius:50%;opacity:.15;filter:blur(70px);background:radial-gradient(circle,#f97316,transparent);pointer-events:none"></div>'+
+    '<div style="position:relative;z-index:1;font-size:12px;font-weight:700;letter-spacing:.3em;text-transform:uppercase;color:rgba(255,255,255,.7)">HORIZONS OF HOPE</div>'+
+    '<h1 style="position:relative;z-index:1;font-size:clamp(32px,5.5vw,60px);font-weight:800;letter-spacing:-.02em;margin:18px auto 0;max-width:800px;line-height:1.1;color:#fff">Every client, every dollar,<br><span style="background:linear-gradient(90deg,#fb923c,#f87171);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent">every goal.</span></h1>'+
+    '<p style="position:relative;z-index:1;font-size:17px;color:rgba(255,255,255,.65);max-width:640px;margin:20px auto 0;line-height:1.6">A complete workspace for Independent Facilitators in California&#39;s Self-Determination Program — clients, budgets, spending plans, goals, compliance, and documents in one place.</p>'+
+    '<div id="authCard" style="position:relative;z-index:1;background:#fff;border-radius:20px;padding:24px;max-width:400px;margin:32px auto 0;box-shadow:0 20px 60px rgba(0,0,0,.4)">'+accessCardHtml()+'</div>'+
+    '<p style="position:relative;z-index:1;font-size:13px;color:rgba(255,255,255,.4);margin-top:22px">Your data never leaves your browser · Works with Google Docs, Sheets &amp; Slides</p>'+
+    '<div style="position:absolute;bottom:-1px;left:0;right:0;line-height:0;pointer-events:none"><svg viewBox="0 0 1440 80" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block"><path d="M0 80 C360 20 1080 20 1440 80 L1440 80 L0 80 Z" fill="#ffffff"/></svg></div>'+
   '</div>'+
-  '<div style="max-width:1020px;margin:0 auto;padding:56px 24px">'+
-    '<div style="text-align:center;margin-bottom:30px"><div style="color:#f97316;font-weight:700;font-size:13px;letter-spacing:.15em">WHAT IT DOES</div><h2 style="font-size:30px;color:#020817;margin:8px 0 0;letter-spacing:-.02em">Everything an IF needs, in one place</h2></div>'+
-    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px">'+
+  '<div style="max-width:1020px;margin:0 auto;padding:24px 24px 56px">'+
+    '<div style="text-align:center;margin-bottom:36px"><span style="display:inline-block;font-size:12px;font-weight:700;letter-spacing:.12em;color:#dc2626;text-transform:uppercase">What it does</span><h2 style="font-size:32px;color:#111827;margin:10px 0 0;letter-spacing:-.02em;font-weight:800">Everything an IF needs, in one place</h2></div>'+
+    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px">'+
     card("💰","Budgets that update themselves","Upload the FMS spending report — spreadsheet or PDF — and every service code, monthly amount, and pending approval syncs automatically. See months remaining and safe-to-spend per month.")+
     card("🎯","Goals with justifications","Turn PCP goals into budget requests: suggested service codes, what to ask for, and certification-ready justification language, with printable reports for the regional center.")+
     card("📋","Compliance &amp; documents","Spending plan checks against WIC 4685.8, a required-documents checklist with reminders, fillable forms, and one-click client update emails and PDFs.")+
     '</div>'+
-    '<div style="text-align:center;margin:60px 0 26px"><div style="color:#f97316;font-weight:700;font-size:13px;letter-spacing:.15em">SIMPLE BY DESIGN</div><h2 style="font-size:30px;color:#020817;margin:8px 0 0;letter-spacing:-.02em">Your monthly routine, in three steps</h2></div>'+
-    '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:26px">'+
+    '<div style="text-align:center;margin:64px 0 28px"><span style="display:inline-block;font-size:12px;font-weight:700;letter-spacing:.12em;color:#dc2626;text-transform:uppercase">Simple by design</span><h2 style="font-size:32px;color:#111827;margin:10px 0 0;letter-spacing:-.02em;font-weight:800">Your monthly routine, in three steps</h2></div>'+
+    '<div style="display:grid;gap:16px;max-width:720px;margin:0 auto">'+
     step("01","Add your client","Regional center, plan year, budget, and contacts — the whole workspace organizes around them.")+
     step("02","Import the FMS report","Drop in the weekly spreadsheet or Spending Summary PDF. Nothing double-counts, ever.")+
     step("03","Send the update","Preview the budget report, save it as a PDF, and email the family — with alerts if spending is off pace.")+
     '</div>'+
   '</div>'+
-  '<div style="background:#020817;color:#94a3b8;text-align:center;padding:26px;font-size:13px">Built with care by <strong style="color:#e2e8f0">Horizons of Hope</strong> · All data stays in your browser — nothing is sent to a server</div>'+
+  '<div style="background:linear-gradient(135deg,#7f1d1d,#c2410c);color:rgba(255,255,255,.8);text-align:center;padding:32px;font-size:13px">Built with care by <strong style="color:#fff">Horizons of Hope</strong> · All data stays in your browser — nothing is sent to a server</div>'+
   '</div>';
 }
 </script>
