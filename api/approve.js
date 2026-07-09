@@ -14,6 +14,22 @@ module.exports = async (req, res) => {
     const u = JSON.parse(raw);
     const host = "https://" + req.headers.host;
     const adminLink = "<p><a href=\""+host+"/api/admin?sig="+sig("admin")+"\">Back to admin panel</a></p>";
+    if (q.action === "resetpw") {
+      const temp = crypto.randomBytes(4).toString("hex").toUpperCase();
+      u.salt = crypto.randomBytes(16).toString("hex");
+      u.hash = crypto.scryptSync(temp, u.salt, 64).toString("hex");
+      if (u.status !== "approved") u.status = "approved";
+      if (u.token) { await rcmd(["DEL", "token:"+u.token]); u.token = null; }
+      await rcmd(["SET", "user:"+em, JSON.stringify(u)]);
+      return res.send(page("Temporary password set", "<p>Give <strong>"+(u.name||em)+"</strong> this temporary password:</p><p style=\"font-size:22px;font-weight:700;color:#7c2d12;background:#fff4ec;padding:10px 16px;border-radius:8px;display:inline-block;letter-spacing:2px\">"+temp+"</p><p>They sign in with their email and this password, then can change it under “Account” in the app.</p>"+adminLink));
+    }
+    if (q.action === "delete") {
+      if (u.token) await rcmd(["DEL", "token:"+u.token]);
+      await rcmd(["DEL", "user:"+em]);
+      await rcmd(["DEL", "dev:"+em]);
+      await rcmd(["SREM", "users", em]);
+      return res.send(page("Deleted", "<p><strong>"+em+"</strong> has been permanently removed from the list.</p>"+adminLink));
+    }
     if (q.action === "deny" || q.action === "revoke") {
       if (u.token) await rcmd(["DEL", "token:"+u.token]);
       u.status = "revoked"; u.token = null;
