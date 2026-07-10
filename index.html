@@ -842,43 +842,58 @@ function renderResources(){
 /* ================= GOALS, ASKS & JUSTIFICATION ================= */
 const LIFE_AREAS = {
  "Independent living":[
-  {code:"320",ask:"__ hrs/week of community living supports",fn:"provide 1:1 coaching in daily living skills (cooking, budgeting, household management, personal safety) in the home and community",gen:"IHSS covers personal care/domestic tasks performed FOR the person, not skill-building instruction; no generic program teaches these skills at this intensity"},
-  {code:"313",ask:"__ hrs/week homemaker services",fn:"maintain a safe, sanitary home environment the participant cannot maintain independently",gen:"IHSS hours are exhausted/insufficient for this need (attach IHSS NOA)"},
-  {code:"314",ask:"one-time housing access support",fn:"secure and set up accessible housing (applications, deposits coordination, move-in supports)",gen:"no generic housing agency provides individualized disability-related move-in support"}],
+  {code:"320",ask:"__ hrs/week of community living supports",fn:"provide 1:1 coaching in daily living skills (cooking, budgeting, household management, personal safety) in the home and community",gen:"IHSS covers personal care/domestic tasks performed FOR the person, not skill-building instruction; no generic program teaches these skills at this intensity",gk:["ihss","community"]},
+  {code:"313",ask:"__ hrs/week homemaker services",fn:"maintain a safe, sanitary home environment the participant cannot maintain independently",gen:"IHSS hours are exhausted/insufficient for this need (attach IHSS NOA)",gk:["ihss"]},
+  {code:"314",ask:"one-time housing access support",fn:"secure and set up accessible housing (applications, deposits coordination, move-in supports)",gen:"no generic housing agency provides individualized disability-related move-in support",gk:["housing","none"]}],
  "Community involvement & relationships":[
-  {code:"331",ask:"__ hrs/week community integration supports",fn:"support participation in community activities, classes, and social groups to build relationships and natural supports",gen:"generic recreation programs do not provide the 1:1 support needed for meaningful access"},
-  {code:"338",ask:"__ round trips/month non-medical transportation",fn:"enable travel to community activities, work, and program sites",gen:"paratransit/public transit is unavailable, insufficient, or the participant cannot use it independently"},
-  {code:"333",ask:"$__ for participant-directed goods/services",fn:"purchase specific goods or services that directly enable this outcome (describe each item)",gen:"item is disability-related and not available through any generic source"}],
+  {code:"331",ask:"__ hrs/week community integration supports",fn:"support participation in community activities, classes, and social groups to build relationships and natural supports",gen:"generic recreation programs do not provide the 1:1 support needed for meaningful access",gk:["community"]},
+  {code:"338",ask:"__ round trips/month non-medical transportation",fn:"enable travel to community activities, work, and program sites",gen:"paratransit/public transit is unavailable, insufficient, or the participant cannot use it independently",gk:["transit"]},
+  {code:"333",ask:"$__ for participant-directed goods/services",fn:"purchase specific goods or services that directly enable this outcome (describe each item)",gen:"item is disability-related and not available through any generic source",gk:["none","community"]}],
  "Employment & career":[
-  {code:"335",ask:"__ hrs/week employment supports (job coaching)",fn:"develop, place, and coach in competitive integrated employment",gen:"Department of Rehabilitation services were applied for and are unavailable/exhausted/insufficient (attach DOR documentation)"},
-  {code:"339",ask:"__ hrs/week prevocational supports",fn:"build general work skills (attendance, task completion, workplace social skills) preparing for competitive employment",gen:"not available through DOR or school transition programs for this individual"},
-  {code:"334",ask:"course/training fees $__ + __ support hrs",fn:"complete individualized training or education tied to the employment goal",gen:"not covered by financial aid, adult education, or DOR"}],
+  {code:"335",ask:"__ hrs/week employment supports (job coaching)",fn:"develop, place, and coach in competitive integrated employment",gen:"Department of Rehabilitation services were applied for and are unavailable/exhausted/insufficient (attach DOR documentation)",gk:["dor"]},
+  {code:"339",ask:"__ hrs/week prevocational supports",fn:"build general work skills (attendance, task completion, workplace social skills) preparing for competitive employment",gen:"not available through DOR or school transition programs for this individual",gk:["dor","school"]},
+  {code:"334",ask:"course/training fees $__ + __ support hrs",fn:"complete individualized training or education tied to the employment goal",gen:"not covered by financial aid, adult education, or DOR",gk:["dor","adulted","finaid"]}],
  "Education & skills":[
-  {code:"334",ask:"tuition/fees $__ per term",fn:"attend individualized training/education program supporting IPP outcomes",gen:"not available through public education, adult ed, or financial aid"},
-  {code:"336",ask:"device + setup $__, training __ hrs",fn:"use technology to learn, communicate, and increase independence",gen:"not covered by Medi-Cal, school district, or other generic source"}],
+  {code:"334",ask:"tuition/fees $__ per term",fn:"attend individualized training/education program supporting IPP outcomes",gen:"not available through public education, adult ed, or financial aid",gk:["school","adulted","finaid"]},
+  {code:"336",ask:"device + setup $__, training __ hrs",fn:"use technology to learn, communicate, and increase independence",gen:"not covered by Medi-Cal, school district, or other generic source",gk:["medical","school"]}],
  "Health & wellness":[
-  {code:"375",ask:"__ sessions/month occupational therapy",fn:"maintain/improve functional skills for daily living",gen:"Medi-Cal-covered OT was requested and denied/exhausted (attach denial or EOB)"},
-  {code:"376",ask:"__ sessions/month physical therapy",fn:"maintain mobility and physical functioning",gen:"Medi-Cal-covered PT was requested and denied/exhausted"},
-  {code:"362",ask:"__ consultations/year nutritional consultation",fn:"address disability-related dietary needs",gen:"not covered by Medi-Cal for this purpose"},
-  {code:"370",ask:"__ sessions/month psychology services",fn:"address disability-related behavioral/emotional needs",gen:"Medi-Cal mental health services inaccessible or insufficient for developmental-disability-specific needs"}],
+  {code:"375",ask:"__ sessions/month occupational therapy",fn:"maintain/improve functional skills for daily living",gen:"Medi-Cal-covered OT was requested and denied/exhausted (attach denial or EOB)",gk:["medical","ccs"]},
+  {code:"376",ask:"__ sessions/month physical therapy",fn:"maintain mobility and physical functioning",gen:"Medi-Cal-covered PT was requested and denied/exhausted",gk:["medical","ccs"]},
+  {code:"362",ask:"__ consultations/year nutritional consultation",fn:"address disability-related dietary needs",gen:"not covered by Medi-Cal for this purpose",gk:["medical"]},
+  {code:"370",ask:"__ sessions/month psychology services",fn:"address disability-related behavioral/emotional needs",gen:"Medi-Cal mental health services inaccessible or insufficient for developmental-disability-specific needs",gk:["mentalhealth","medical"]}],
  "Behavior support":[
-  {code:"364",ask:"__ hrs/month behavioral intervention services",fn:"reduce behaviors that limit community participation via a positive behavior support plan",gen:"Medi-Cal behavioral health was pursued and is unavailable/insufficient (document referral)"},
-  {code:"363",ask:"crisis intervention plan + __ hrs as needed",fn:"stabilize crises and keep the participant in their home/community",gen:"county crisis services are not disability-competent for this need"}],
+  {code:"364",ask:"__ hrs/month behavioral intervention services",fn:"reduce behaviors that limit community participation via a positive behavior support plan",gen:"Medi-Cal behavioral health was pursued and is unavailable/insufficient (document referral)",gk:["mentalhealth","medical"]},
+  {code:"363",ask:"crisis intervention plan + __ hrs as needed",fn:"stabilize crises and keep the participant in their home/community",gen:"county crisis services are not disability-competent for this need",gk:["mentalhealth"]}],
  "Communication":[
-  {code:"360",ask:"__ hrs/month communication support",fn:"access effective communication across settings",gen:"not available through school district or Medi-Cal"},
-  {code:"372",ask:"__ sessions/month speech-language services",fn:"improve expressive/receptive communication",gen:"Medi-Cal/school-based speech services denied, exhausted, or unavailable to adults"},
-  {code:"336",ask:"AAC device/apps $__ + training",fn:"use assistive communication technology",gen:"Medi-Cal DME request denied or device type not covered"}],
+  {code:"360",ask:"__ hrs/month communication support",fn:"access effective communication across settings",gen:"not available through school district or Medi-Cal",gk:["school","medical"]},
+  {code:"372",ask:"__ sessions/month speech-language services",fn:"improve expressive/receptive communication",gen:"Medi-Cal/school-based speech services denied, exhausted, or unavailable to adults",gk:["medical","school"]},
+  {code:"336",ask:"AAC device/apps $__ + training",fn:"use assistive communication technology",gen:"Medi-Cal DME request denied or device type not covered",gk:["medical"]}],
  "Safety at home & in community":[
-  {code:"356",ask:"home modification(s) $__ (bids attached)",fn:"make the home physically accessible and safe (ramps, grab bars, widened doors)",gen:"not covered by Medi-Cal HCBS or housing programs; landlord approval obtained"},
-  {code:"358",ask:"PERS unit $__/month",fn:"summon help in emergencies while alone, enabling safe independence",gen:"not a Medi-Cal-covered benefit for this individual"},
-  {code:"365",ask:"equipment/supplies $__ (list attached)",fn:"meet disability-specific medical/safety equipment needs",gen:"Medi-Cal DME request denied or item not covered (attach denial)"}],
+  {code:"356",ask:"home modification(s) $__ (bids attached)",fn:"make the home physically accessible and safe (ramps, grab bars, widened doors)",gen:"not covered by Medi-Cal HCBS or housing programs; landlord approval obtained",gk:["medical","housing"]},
+  {code:"358",ask:"PERS unit $__/month",fn:"summon help in emergencies while alone, enabling safe independence",gen:"not a Medi-Cal-covered benefit for this individual",gk:["medical"]},
+  {code:"365",ask:"equipment/supplies $__ (list attached)",fn:"meet disability-specific medical/safety equipment needs",gen:"Medi-Cal DME request denied or item not covered (attach denial)",gk:["medical"]}],
  "Family support & respite":[
-  {code:"310",ask:"__ hrs/month in-home respite",fn:"give the primary caregiver scheduled relief, sustaining the family placement",gen:"no generic respite source exists; IHSS does not provide caregiver relief"},
-  {code:"311",ask:"__ days/quarter out-of-home respite",fn:"provide caregiver relief and the participant a safe out-of-home experience",gen:"not available through any generic program"},
-  {code:"366",ask:"__ hrs training for family",fn:"equip family to support skill development and behavior strategies at home",gen:"not available through insurance or school"}],
+  {code:"310",ask:"__ hrs/month in-home respite",fn:"give the primary caregiver scheduled relief, sustaining the family placement",gen:"no generic respite source exists; IHSS does not provide caregiver relief",gk:["ihss","none"]},
+  {code:"311",ask:"__ days/quarter out-of-home respite",fn:"provide caregiver relief and the participant a safe out-of-home experience",gen:"not available through any generic program",gk:["none"]},
+  {code:"366",ask:"__ hrs training for family",fn:"equip family to support skill development and behavior strategies at home",gen:"not available through insurance or school",gk:["medical","school"]}],
  "Transportation & mobility":[
-  {code:"338",ask:"__ trips/month non-medical transportation",fn:"access work, day services, and community activities",gen:"public/paratransit unavailable or unusable for this individual"},
-  {code:"377",ask:"vehicle modification $__ (bids attached)",fn:"safely transport the participant in the family vehicle",gen:"not covered by Medi-Cal or DOR"}]
+  {code:"338",ask:"__ trips/month non-medical transportation",fn:"access work, day services, and community activities",gen:"public/paratransit unavailable or unusable for this individual",gk:["transit"]},
+  {code:"377",ask:"vehicle modification $__ (bids attached)",fn:"safely transport the participant in the family vehicle",gen:"not covered by Medi-Cal or DOR",gk:["medical","dor"]}]
+};
+/* Plain-language briefing on each generic resource: what it is + what the facilitator should check and document before SDP will fund the item. */
+const GENERIC_GUIDE = {
+ ihss:{name:"IHSS (In-Home Supportive Services)",what:"County program that pays a caregiver for personal care (bathing, dressing, meals) and domestic chores done FOR the person.",do:"Confirm the person's current authorized hours and request the annual Notice of Action (NOA). SDP can't pay for hours IHSS already covers — but it CAN fund skill-teaching (which IHSS doesn't do) or a need IHSS won't authorize. Attach the NOA or assessment."},
+ dor:{name:"Department of Rehabilitation (DOR)",what:"State agency that funds employment services — vocational assessment, job development, placement, and time-limited job coaching — for people with a work goal.",do:"Apply and open a DOR case first. SDP funds employment supports only once DOR has closed or denied the case, or its services are exhausted/insufficient for ongoing support. Attach the DOR plan (IPE), closure letter, or denial."},
+ medical:{name:"Medi-Cal / managed-care plan",what:"Covers medically necessary services — therapies (OT/PT/speech), durable medical equipment (DME), nursing, and some mental health.",do:"Have the doctor request it through Medi-Cal, then get the denial, Explanation of Benefits (EOB), or proof the benefit is exhausted before asking SDP. Attach it."},
+ ccs:{name:"California Children's Services (CCS)",what:"Covers therapies and equipment for eligible children with qualifying medical conditions.",do:"For participants under 21, check CCS eligibility first and note the result."},
+ mentalhealth:{name:"County mental health / Medi-Cal behavioral health",what:"County plans cover mental health treatment and some behavioral services.",do:"Make a referral and document that county services are unavailable, waitlisted, or not competent for developmental-disability-specific needs. Attach the referral outcome."},
+ school:{name:"School district / IEP / transition services",what:"Districts must provide services in a student's IEP — including transition and some therapies — through age 21.",do:"If the participant is a student, the district (not SDP) funds IEP services. Document that the need falls outside the IEP or that the person has exited school."},
+ adulted:{name:"Adult education & community college (DSPS)",what:"Free/low-cost classes and Disabled Students Programs & Services at community colleges.",do:"Check whether the class or support is available through DSPS or adult ed before requesting SDP funds."},
+ finaid:{name:"Financial aid & fee waivers",what:"FAFSA, College Promise/fee waivers, and scholarships that cover tuition.",do:"Apply for aid first; SDP covers only disability-related costs aid won't. Attach the award or denial."},
+ transit:{name:"Public transit & ADA paratransit",what:"Local fixed-route transit and ADA paratransit (e.g., Access) for people who can't use fixed-route.",do:"Check paratransit eligibility and whether the person can travel safely and independently. Document why it's unavailable, insufficient, or unusable."},
+ housing:{name:"Housing programs (Section 8 / HUD / local authority)",what:"Rental subsidies and accessible-housing programs.",do:"These cover rent/subsidy — not individualized, disability-related move-in help. Note which housing programs you checked."},
+ community:{name:"Natural & community supports",what:"Free community programs, recreation, classes, family, friends, and volunteers.",do:"Note what you tried. SDP funds paid 1:1 support only where natural/community supports can't meet the need."},
+ none:{name:"No generic source responsible",what:"This is a disability-specific need with no public program obligated to provide it.",do:"State plainly that no generic resource covers it and briefly say why the need is disability-related."}
 };
 function goalMigrate(c){ if(!c.goals) c.goals=[]; }
 function renderGoals(){
@@ -913,7 +928,11 @@ function renderGoals(){
         html+=`<div class="card" style="background:var(--blue-light)">
         <strong>${s.code} — ${sc?sc.name:""}</strong> <span class="badge blue">${sc?sc.cat:""}</span>
         <p class="muted" style="margin:6px 0"><strong>What to ask for:</strong> ${esc(s.ask)}</p>
-        <p class="muted" style="margin:6px 0"><strong>Justification draft:</strong> ${esc(justText(c,g,s))}</p>
+        ${genericGuidance(s)}
+        <div style="background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin:8px 0">
+          <div style="font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:3px">Ready-to-paste ask for the report</div>
+          <p style="margin:0;font-size:13px">${esc(justText(c,g,s))}</p>
+        </div>
         <div class="row"><div><label>Annual amount ($)</label><input type="number" id="ga_${g.id}_${si}" min="0" step="0.01"></div>
         <div style="flex:2"><label>Provider / detail (optional)</label><input id="gp_${g.id}_${si}" placeholder="provider name, rate detail"></div>
         <div><button class="btn small" onclick="addGoalService('${c.id}','${g.id}',${si})">Add to spending plan</button></div></div></div>`;
@@ -927,7 +946,19 @@ function renderGoals(){
 }
 function justText(c,g,s){
   const sc=SERVICE_CODES.find(x=>x.code===s.code);
-  return `This request directly addresses ${c.name}'s IPP desired outcome: "${g.title}". ${sc?sc.name:"The service"} (code ${s.code}) will ${s.fn}. Generic resources were considered: ${s.gen}. This is an approved SDP service eligible for federal financial participation. Requested: ${s.ask}.`;
+  const nm=sc?sc.name:"This service";
+  const genClause=s.gen.replace(/\s*\((?:attach|document)[^)]*\)/gi,"").trim();
+  return `${nm} (code ${s.code}) is requested to ${s.fn} — directly supporting ${c.name}'s IPP outcome "${g.title}." Generic resources cannot meet this need: ${genClause}. It is an eligible SDP service claimable for federal financial participation. Requested: ${s.ask}.`;
+}
+/* Detailed, on-screen briefing for the facilitator: which generic programs to check for THIS service and what to document. Not included in the report. */
+function genericGuidance(s){
+  const items=(s.gk||[]).map(k=>{ const g=GENERIC_GUIDE[k]; if(!g) return ""; return `<li style="margin:6px 0"><strong>${esc(g.name)}</strong> — ${esc(g.what)}<br><span style="color:var(--blue-dark)"><strong>What to do:</strong></span> ${esc(g.do)}</li>`; }).join("");
+  return `<details style="margin:6px 0"><summary style="font-weight:600;font-size:13px;color:var(--blue-dark)">📋 Before you ask — generic resources to check &amp; document</summary>
+  <div style="padding:6px 2px">
+  <p class="muted" style="margin:4px 0">SDP is the <strong>payer of last resort</strong>. Before the regional center certifies this item, you have to show the need can't be met by a "generic resource" — a public program already responsible for it (WIC §4685.8(d)(3)(C)(ii)). Check the sources below, then keep the paperwork.</p>
+  <ul style="margin:6px 0 4px 18px;font-size:12.5px;line-height:1.5;color:var(--ink)">${items}</ul>
+  <p class="muted" style="margin:6px 0 0;font-size:12px"><strong>Short version for the report:</strong> ${esc(s.gen)}. Attach any denial letters, NOAs, EOBs, or closure letters that back this up.</p>
+  </div></details>`;
 }
 function addGoal(cid){
   const c=getClient(cid); goalMigrate(c);
