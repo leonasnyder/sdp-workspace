@@ -822,6 +822,19 @@ function renderResources(){
   <p><strong>FMS models:</strong> Bill Payer / Fiscal Agent (315) · Co-Employer (316) · Sole Employer / Fiscal-Employer Agent (317). Flat monthly fee per the state rate schedule.</p>
   <p><strong>Spending plan rules:</strong> total ≤ certified budget · every item costed &amp; coded · items must address IPP outcomes, be unavailable from generic services, and be FFP-eligible · attach plan to IPP · distribute funds to last the full year.</p>
   <p><strong>Watch for 2026:</strong> AB 143 requires DDS to define "cost effective" by directive (due Aug 1, 2026) — spending plans will be reviewed against it. Check DDS Program Updates.</p></div>
+  <div class="card"><h3 class="mt0">📐 How to size hours &amp; units (what to put in the "ask")</h3>
+  <p class="muted">SDP is needs-based — there's no fixed state number. The quantity comes from the participant's actual support needs (from the PCP/IPP and any assessments), which you convert into an annual amount and then price. The 🧮 calculator on each service in <strong>Goals, Asks &amp; Justification</strong> runs this math for you.</p>
+  <p style="margin-bottom:2px"><strong>1 · Annual quantity</strong> — the number that goes in the ask</p>
+  <p style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;background:var(--bg);padding:8px 10px;border-radius:6px;margin:4px 0">Hourly:&nbsp;&nbsp;&nbsp;annual hours = hours per session × sessions per week × weeks per year<br>Unit-based: annual units = units per period × periods per year</p>
+  <p class="muted">Use 52 weeks for year-round support, or the real number for seasonal / partial-year needs (e.g., 40 school weeks, or a 12-week ramp-up). Thinking monthly? Weeks per month ≈ 4.33 (52 ÷ 12), so hrs/week × 4.33 × 12, or simply hrs/month × 12. Examples: 4 respite days/quarter × 4 = 16 days/yr · 3 trips/week × 52 = 156 trips/yr · 2 OT sessions/month × 12 = 24 sessions/yr.</p>
+  <p style="margin-bottom:2px"><strong>2 · Cost</strong> — check it fits the budget</p>
+  <p style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;background:var(--bg);padding:8px 10px;border-radius:6px;margin:4px 0">annual cost = annual units × loaded rate</p>
+  <p class="muted">For an employed worker the loaded rate = wage × (1 + employer burden %) + FMS fee. The <strong>Spending Plan</strong> tab already computes this as the "true wage per hour," so you don't have to do the burden math by hand.</p>
+  <p style="margin-bottom:2px"><strong>3 · Which direction to work</strong></p>
+  <p class="muted"><strong>Needs-first</strong> (best for justification): set the hours from need, cost each service, add them up, and confirm the total is at or under the certified budget. Over budget? That's where you prioritize or request a budget revision.<br><strong>Budget-first</strong> (when a line is capped): affordable units = dollars allocated to that line ÷ loaded rate.</p>
+  <p><strong>Worked example — job coaching that fades:</strong> 10 hrs/week for the first 12 weeks, then 4 hrs/week for the remaining 40 → (10 × 12) + (4 × 40) = <strong>280 hrs/year</strong>. At a loaded $25/hr → 280 × $25 = <strong>$7,000/year</strong>. Size each phase separately, then add them.</p>
+  <p><strong>Make the number defensible:</strong> tie it to a provider or assessment recommendation (and attach it), to the goal's frequency (e.g., 2 community outings/week <em>because</em> the outcome is building relationships — not a round guess), and net out anything IHSS or a generic resource already covers so you're not duplicating.</p>
+  <p class="muted" style="font-size:12px">This is planning guidance, not a rate quote or legal advice — your regional center's SDP unit has the final say on what it will certify.</p></div>
   <div class="card"><h3 class="mt0">Your data</h3>
   <p class="muted">Everything you enter lives only in this browser (localStorage) — nothing is sent anywhere. Turn on <strong>📁 auto-backup</strong> (header) to save automatically to a folder you designate — e.g. Google Drive for Desktop &gt; IF Clients 2026 — with one subfolder per client (data file + readable budget summary). Works in Chrome/Edge; after reopening the app, one click reconnects the folder. <strong>Backup data / Restore</strong> still work manually anywhere.</p></div>
   <div class="card" style="border-left:4px solid var(--amber)"><h3 class="mt0">🔐 Privacy &amp; confidentiality — please read</h3>
@@ -933,7 +946,18 @@ function renderGoals(){
           <div style="font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:3px">Ready-to-paste ask for the report</div>
           <p style="margin:0;font-size:13px">${esc(justText(c,g,s))}</p>
         </div>
-        <div class="row"><div><label>Annual amount ($)</label><input type="number" id="ga_${g.id}_${si}" min="0" step="0.01"></div>
+        <div style="background:#fff;border:1px dashed var(--blue);border-radius:8px;padding:8px 12px;margin:8px 0">
+          <div style="font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:5px">🧮 Size it — hours/units → annual → cost</div>
+          <div class="row" style="gap:8px">
+            <div><label>Amount</label><input type="number" min="0" step="0.5" id="cq_${g.id}_${si}" placeholder="10" oninput="calcGoalUnits('${g.id}',${si})"></div>
+            <div><label>Per</label><select id="cp_${g.id}_${si}" onchange="setGoalPeriod('${g.id}',${si})"><option value="week">week</option><option value="month">month</option><option value="quarter">quarter</option><option value="year">year</option></select></div>
+            <div><label>× periods/yr</label><input type="number" min="0" step="1" id="cn_${g.id}_${si}" value="52" oninput="calcGoalUnits('${g.id}',${si})"></div>
+            <div><label>Loaded $/unit</label><input type="number" min="0" step="0.01" id="cr_${g.id}_${si}" placeholder="25" oninput="calcGoalUnits('${g.id}',${si})"></div>
+          </div>
+          <div id="co_${g.id}_${si}" style="margin:6px 0 0;font-size:13px;color:var(--blue-dark)"></div>
+          <div class="muted" style="font-size:11px;margin-top:3px">Loaded rate = the "true wage per hour" from the Spending Plan (wage + employer taxes + FMS), or your provider's rate. For a fading schedule, size each phase separately and add them.</div>
+        </div>
+        <div class="row"><div><label>Annual amount ($) <span style="font-weight:400">— fills from calculator, or type it</span></label><input type="number" id="ga_${g.id}_${si}" min="0" step="0.01"></div>
         <div style="flex:2"><label>Provider / detail (optional)</label><input id="gp_${g.id}_${si}" placeholder="provider name, rate detail"></div>
         <div><button class="btn small" onclick="addGoalService('${c.id}','${g.id}',${si})">Add to spending plan</button></div></div></div>`;
       });
@@ -949,6 +973,26 @@ function justText(c,g,s){
   const nm=sc?sc.name:"This service";
   const genClause=s.gen.replace(/\s*\((?:attach|document)[^)]*\)/gi,"").trim();
   return `${nm} (code ${s.code}) is requested to ${s.fn} — directly supporting ${c.name}'s IPP outcome "${g.title}." Generic resources cannot meet this need: ${genClause}. It is an eligible SDP service claimable for federal financial participation. Requested: ${s.ask}.`;
+}
+/* Goals-card calculator: amount per period × periods/year = annual quantity; × loaded rate = annual cost. Fills the Annual amount field. */
+function setGoalPeriod(gid,si){
+  const sel=document.getElementById(`cp_${gid}_${si}`), cn=document.getElementById(`cn_${gid}_${si}`);
+  const map={week:52,month:12,quarter:4,year:1};
+  if(sel&&cn) cn.value=map[sel.value]||"";
+  calcGoalUnits(gid,si);
+}
+function calcGoalUnits(gid,si){
+  const gv=id=>{const e=document.getElementById(id); return e?(+e.value||0):0;};
+  const qty=gv(`cq_${gid}_${si}`), nper=gv(`cn_${gid}_${si}`), rate=gv(`cr_${gid}_${si}`);
+  const annual=qty*nper, cost=annual*rate;
+  const annualStr=(annual%1)?annual.toFixed(1):String(annual);
+  const out=document.getElementById(`co_${gid}_${si}`);
+  if(out){
+    if(!qty||!nper) out.innerHTML="";
+    else out.innerHTML=`= <strong>${annualStr}</strong> per year`+(rate?` × ${money(rate)} = <strong>${money(cost)}/yr</strong>`:` <span class="muted">(add a loaded rate to get the $)</span>`);
+  }
+  const amt=document.getElementById(`ga_${gid}_${si}`);
+  if(amt && qty && nper && rate) amt.value=cost.toFixed(2);
 }
 /* Detailed, on-screen briefing for the facilitator: which generic programs to check for THIS service and what to document. Not included in the report. */
 function genericGuidance(s){
