@@ -465,6 +465,7 @@ function drawClientForm(){
       <option value="">— select —</option>
       ${["Bill Payer (315)","Co-Employer (316)","Sole Employer (317)"].map(m=>`<option ${c.fmsModel===m?"selected":""}>${m}</option>`).join("")}
     </select></div>
+    <div><label>FMS fee % <span style="font-weight:400">(optional)</span></label><input type="number" step="0.1" id="cf_fmspct" value="${c.fmsPct||""}" placeholder="e.g. 25"><div class="muted" style="font-size:11px">flows into the Spending Plan flat-% method</div></div>
   </div>
   <label>Notes</label><textarea id="cf_notes">${esc(c.notes)}</textarea>
   <button class="btn" onclick="saveClient()">Save client</button>
@@ -476,7 +477,7 @@ function saveClient(){
   c.phone=v("cf_phone"); c.email=v("cf_email"); c.planStart=v("cf_start"); c.planEnd=v("cf_end");
   c.c2name=v("cf_c2name"); c.c2phone=v("cf_c2phone"); c.c2email=v("cf_c2email");
   c.c3name=v("cf_c3name"); c.c3phone=v("cf_c3phone"); c.c3email=v("cf_c3email");
-  c.budget=+v("cf_budget")||0; c.fms=v("cf_fms"); c.fmsModel=v("cf_fmsm"); c.notes=v("cf_notes");
+  c.budget=+v("cf_budget")||0; c.fms=v("cf_fms"); c.fmsModel=v("cf_fmsm"); c.fmsPct=+v("cf_fmspct")||0; c.notes=v("cf_notes");
   if(!c.name){ alert("Please enter a name."); return; }
   if(!DB.clients.includes(c)) DB.clients.push(c);
   editingClient=null; save(); renderAll();
@@ -950,28 +951,24 @@ function printResultsReport(cid){
 <script>
 /* ================= FMS PORTAL ACCESS & CLIENT UPDATES ================= */
 function fmsCard(c){
-  if(!c.fmsPortal) c.fmsPortal={url:"",user:"",pass:"",day:"",consent:false};
+  if(!c.fmsPortal) c.fmsPortal={url:"",day:""};
+  /* scrub any previously-stored login credentials — we no longer keep these */
+  let scrubbed=false;
+  ["user","pass","consent"].forEach(k=>{ if(c.fmsPortal[k]!==undefined){ delete c.fmsPortal[k]; scrubbed=true; } });
+  if(scrubbed) save();
   const f=c.fmsPortal;
-  return `<div class="card"><h3 class="mt0">FMS portal &amp; monthly check-in</h3>
-  <p class="muted">Keep the client's FMS sign-on here (with their written consent) so statement day is one click. ⚠ Stored unencrypted in this browser only — best practice is asking the FMS to give you your own authorized-user login instead of sharing the client's.</p>
+  return `<div class="card"><h3 class="mt0">FMS &amp; monthly update</h3>
+  <p class="muted">FMS: <strong>${esc(c.fms||"—")}</strong>${c.fmsModel?" ("+esc(c.fmsModel)+")":""}${c.fmsPct?" · charges "+esc(String(c.fmsPct))+"%":""} — set the provider, model &amp; fee % on the <strong>Clients</strong> tab (the % flows into the Spending Plan). No login is stored here; to track spending, upload the FMS's emailed report in the Budget tab.</p>
   <div class="row">
-    <div style="flex:2"><label>FMS portal web address</label><input value="${esc(f.url)}" placeholder="https://portal.yourfms.com" onchange="fmsField('${c.id}','url',this.value)"></div>
-    <div><label>Username</label><input value="${esc(f.user)}" onchange="fmsField('${c.id}','user',this.value)"></div>
-    <div><label>Password</label><input type="password" id="fp_${c.id}" value="${esc(f.pass)}" onchange="fmsField('${c.id}','pass',this.value)">
-      <span class="muted" style="cursor:pointer" onclick="togglePass('${c.id}')">show/hide</span></div>
-    <div><label>Statement day</label><input value="${esc(f.day)}" placeholder="e.g. 5th" onchange="fmsField('${c.id}','day',this.value)"></div>
+    <div style="flex:2"><label>FMS portal link (optional bookmark)</label><input value="${esc(f.url)}" placeholder="https://portal.yourfms.com" onchange="fmsField('${c.id}','url',this.value)"></div>
+    <div><label>Statement day (optional)</label><input value="${esc(f.day)}" placeholder="e.g. 5th" onchange="fmsField('${c.id}','day',this.value)"></div>
   </div>
-  <label style="display:flex;gap:8px;align-items:center;font-weight:400;margin-top:8px">
-    <input type="checkbox" style="width:18px;height:18px" ${f.consent?"checked":""} onchange="fmsField('${c.id}','consent',this.checked)">
-    Client/representative gave written consent for me to access their FMS account
-  </label>
   ${f.url?`<button class="btn secondary" onclick="window.open('${esc(f.url)}','_blank')">🔗 Open FMS portal</button>`:""}
   <button class="btn" onclick="emailUpdate('${c.id}')">✉ Email budget update to client</button>
   <button class="btn secondary" onclick="copyUpdate('${c.id}')">Copy update text</button>
-  <p class="muted" style="margin-top:6px">Monthly routine: open portal → reconcile the statement → log spending above → the app flags over/under pace automatically (Dashboard alerts) → send the update.</p></div>`;
+  <p class="muted" style="margin-top:6px">Monthly routine: get the FMS statement → import it (Budget tab) → the app flags over/under pace → send the update.</p></div>`;
 }
-function fmsField(cid,k,val){ const c=getClient(cid); if(!c.fmsPortal)c.fmsPortal={}; c.fmsPortal[k]=val; save(); if(k==="url"||k==="consent")renderBudget(); }
-function togglePass(cid){ const i=document.getElementById("fp_"+cid); i.type=i.type==="password"?"text":"password"; }
+function fmsField(cid,k,val){ const c=getClient(cid); if(!c.fmsPortal)c.fmsPortal={}; c.fmsPortal[k]=val; save(); if(k==="url")renderBudget(); }
 function updateText(c){
   const sp=spentTotal(c), rem=c.budget-sp, up=Math.round(utilization(c)), yp=planYearPct(c);
   let t=`Hi ${c.name.split(" ")[0]},\n\nHere is your SDP budget update as of ${new Date().toLocaleDateString()}:\n\n`;
@@ -2051,7 +2048,7 @@ const FMS_TIERS=["0–4","5–10","11+"];
 function spStore(c){ if(!c.splan) c.splan={budget:c.budget||0,rates:{...EMP_RATES},workers:[],items:[],fms:0,cert:{}}; if(!c.splan.rates)c.splan.rates={...EMP_RATES};
   if(!c.splan.rateBasis) c.splan.rateBasis="wage";
   if(!c.splan.burdenMethod) c.splan.burdenMethod="detailed";
-  if(c.splan.flatPct===undefined) c.splan.flatPct=0.25;
+  if(c.splan.flatPct===undefined) c.splan.flatPct=(c.fmsPct>0?(+c.fmsPct/100):0.25);
   if(c.splan.flatInclFms===undefined) c.splan.flatInclFms=true;
   if(!c.splan.fmsModel) c.splan.fmsModel="Co-Employer (316)";
   if(!c.splan.fmsSchedule) c.splan.fmsSchedule=JSON.parse(JSON.stringify(FMS_SCHEDULE));
