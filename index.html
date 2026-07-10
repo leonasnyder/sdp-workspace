@@ -259,17 +259,27 @@ function newClient(){ return {id:uid(),name:"",rc:"",coordinator:"",coordPhone:"
   steps:PROCESS_STEPS.map(()=>({done:false,date:"",note:""})),
   plan:[], expenses:[], pcp:{}, compliance:{}, goals:[]}; }
 
+function markBackedUp(){ try{ localStorage.setItem("ifsdp_lastbackup", String(Date.now())); }catch(e){} }
+function backupHealth(){
+  const hasClients=(DB.clients||[]).length>0;
+  let last=0; try{ last=+localStorage.getItem("ifsdp_lastbackup")||0; }catch(e){}
+  const auto=(typeof backupDir!=="undefined"&&backupDir);
+  const days=last?Math.floor((Date.now()-last)/86400000):null;
+  return {hasClients, auto:!!auto, last, days, never:!last};
+}
 function exportData(){
   const blob = new Blob([JSON.stringify(DB,null,2)],{type:"application/json"});
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
   a.download = "if-sdp-backup-"+today()+".json";
   a.click();
+  markBackedUp();
+  if(typeof renderDashboard==="function") setTimeout(renderDashboard,50);
 }
 function importData(ev){
   const f = ev.target.files[0]; if(!f) return;
   const r = new FileReader();
-  r.onload = ()=>{ try{ DB = JSON.parse(r.result); save(); renderAll(); alert("Data restored."); }catch(e){ alert("Could not read that file."); } };
+  r.onload = ()=>{ try{ DB = JSON.parse(r.result); save(); markBackedUp(); renderAll(); alert("Data restored."); }catch(e){ alert("Could not read that file."); } };
   r.readAsText(f);
 }
 
@@ -345,7 +355,16 @@ function renderDashboard(){
   let alerts=[];
   cs.forEach(c=>clientAlerts(c).forEach(a=>alerts.push({...a,name:c.name})));
   cs.forEach(c=>{ const m=missingDocs(c); if(m.length) alerts.push({lv:"amber",name:c.name,msg:"Documents still needed: "+m.join(", ")+"."}); });
+  const bh=backupHealth();
+  let backupBanner="";
+  if(bh.hasClients){
+    if(bh.auto) backupBanner=`<div class="alert green">🔒 Auto-backup is on — your data saves automatically to your chosen folder.${bh.days!==null&&bh.days>0?" Last saved "+bh.days+" day"+(bh.days>1?"s":"")+" ago.":" Last saved just now."}</div>`;
+    else if(bh.never) backupBanner=`<div class="alert red">⚠ <strong>Your data has never been backed up.</strong> It lives only in this browser — clearing history or switching computers would lose it. Click <strong>📁 Set up auto-backup</strong> or <strong>⬇ Backup data</strong> (top right) now.</div>`;
+    else if(bh.days>=3) backupBanner=`<div class="alert red">⚠ <strong>It's been ${bh.days} days since your last backup.</strong> Click <strong>⬇ Backup data</strong> (top right) — or turn on 📁 auto-backup so it's automatic.</div>`;
+    else backupBanner=`<div class="alert green">🔒 Last backed up ${bh.days===0?"today":bh.days+" day"+(bh.days>1?"s":"")+" ago"}. Tip: turn on 📁 auto-backup to make it automatic.</div>`;
+  }
   let html=`<h2>Dashboard</h2><p class="hint">Caseload overview. Everything is saved automatically in this browser. Turn on 📁 auto-backup (top right) to also save each client's file to a folder you choose — point it at Google Drive for Desktop and it syncs to the cloud.</p>
+  ${backupBanner}
   <div class="grid cols3">
     <div class="card stat"><div class="num">${cs.length}</div><div class="lbl">Active clients</div></div>
     <div class="card stat"><div class="num">${money(totBudget)}</div><div class="lbl">Combined annual budgets</div></div>
@@ -355,7 +374,15 @@ function renderDashboard(){
   if(!alerts.length) html+=`<div class="alert green">No alerts — all clients are on track.</div>`;
   alerts.forEach(a=>html+=`<div class="alert ${a.lv}"><strong>${esc(a.name)||"Client"}:</strong> ${a.msg}</div>`);
   html+=`<h3>Clients at a glance</h3>`;
-  if(!cs.length) html+=`<div class="card">No clients yet. Add your first client in the <strong>Clients</strong> tab.</div>`;
+  if(!cs.length) html+=`<div class="card" style="border-left:4px solid var(--blue)">
+    <h3 class="mt0">👋 Welcome — let's get you set up</h3>
+    <p class="muted">Three steps to your first client:</p>
+    <ol style="line-height:1.9;padding-left:20px">
+      <li><strong>Add your first client</strong> — name, regional center, plan year, and budget. <button class="btn small" onclick="showView('clients');setTimeout(()=>editClient(null),50)">+ Add a client</button></li>
+      <li><strong>Import the FMS report</strong> — in the Budget tab, drop in the spreadsheet or Spending Summary PDF and everything fills in automatically.</li>
+      <li><strong>Turn on auto-backup</strong> — click <strong>📁 Set up auto-backup</strong> (top right) and point it at your Google Drive folder so your work is always saved.</li>
+    </ol>
+    <p class="muted">Every tab up top handles a piece of the SDP process — Spending Plan, Goals &amp; Asks, Compliance, PCP Builder, Forms, Documents. Explore any time.</p></div>`;
   else{
     html+=`<div class="card"><table><tr><th>Client</th><th>Regional center</th><th>Process</th><th>Budget used</th><th></th></tr>`;
     cs.forEach(c=>{
@@ -762,7 +789,17 @@ function renderResources(){
   <p><strong>Spending plan rules:</strong> total ≤ certified budget · every item costed &amp; coded · items must address IPP outcomes, be unavailable from generic services, and be FFP-eligible · attach plan to IPP · distribute funds to last the full year.</p>
   <p><strong>Watch for 2026:</strong> AB 143 requires DDS to define "cost effective" by directive (due Aug 1, 2026) — spending plans will be reviewed against it. Check DDS Program Updates.</p></div>
   <div class="card"><h3 class="mt0">Your data</h3>
-  <p class="muted">Everything you enter lives only in this browser (localStorage) — nothing is sent anywhere. Turn on <strong>📁 auto-backup</strong> (header) to save automatically to a folder you designate — e.g. Google Drive for Desktop &gt; IF Clients 2026 — with one subfolder per client (data file + readable budget summary). Works in Chrome/Edge; after reopening the app, one click reconnects the folder. <strong>Backup data / Restore</strong> still work manually anywhere. Client information is sensitive: store backups securely.</p></div>`;
+  <p class="muted">Everything you enter lives only in this browser (localStorage) — nothing is sent anywhere. Turn on <strong>📁 auto-backup</strong> (header) to save automatically to a folder you designate — e.g. Google Drive for Desktop &gt; IF Clients 2026 — with one subfolder per client (data file + readable budget summary). Works in Chrome/Edge; after reopening the app, one click reconnects the folder. <strong>Backup data / Restore</strong> still work manually anywhere.</p></div>
+  <div class="card" style="border-left:4px solid var(--amber)"><h3 class="mt0">🔐 Privacy &amp; confidentiality — please read</h3>
+  <p class="muted">This app stores sensitive client information — names, budgets, and any medical or behavioral detail you enter or import from IPPs and PCPs. Handle it with the same care you'd give paper client files:</p>
+  <ul style="color:var(--muted);font-size:13px;line-height:1.6">
+    <li><strong>Where it lives:</strong> only in your browser and any backup folder you choose (e.g. your Google Drive). It is <em>not</em> stored on a shared server, and other users of the website can't see your data.</li>
+    <li><strong>What this is — and isn't:</strong> this is a personal record-keeping tool, like a private spreadsheet. The sign-in gate protects the front door, but data is <strong>not encrypted at rest</strong> and this is <strong>not a HIPAA-certified system</strong>. Don't treat it as a substitute for a covered records system if your work requires one.</li>
+    <li><strong>Protect your devices:</strong> use a password/lock on any computer where you open the app, keep your Google account secured (2-step verification), and store exported backup files somewhere private — not a shared or public folder.</li>
+    <li><strong>Sharing with families or the RC:</strong> only share the specific report or document needed, and make sure your client's consent-to-share form (Forms tab) covers it.</li>
+    <li><strong>Before inviting others:</strong> remember each person keeps their own separate copy of whatever they enter; there's no shared client database, and you as admin can't see their data.</li>
+  </ul>
+  <p class="muted">Questions about your obligations? Check with your regional center or a privacy professional — this notice is guidance, not legal advice.</p></div>`;
 }
 
 /* ================= INIT: moved to final script block ================= */
@@ -1010,6 +1047,7 @@ async function writeBackup(){
       await writeFile(folder, sanitizeName(c.name)+" - budget summary.txt", updateText(c));
     }
     bkStatus("✓ backed up "+new Date().toLocaleTimeString([], {hour:"numeric",minute:"2-digit"}),true);
+    markBackedUp();
   }catch(e){
     bkStatus("⚠ backup failed — click to reconnect",false);
     console.warn("backup:",e);
