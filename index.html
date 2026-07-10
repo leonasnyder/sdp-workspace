@@ -2112,6 +2112,32 @@ function rcItemRow(c,it){
   return {desc:(it.desc||""),code:it.code||"",units,unitType:(it.unitType||(hasUnit?"Each":"Lump sum")),
     freqType:(it.freqType||"Year"),freq,totalUnits,rate,empCost:0,adjRate:rate,adj,amount:itemAmount(it)};
 }
+const CA_MIN_WAGE=16.90; /* CA statewide minimum, 2026; many cities require more */
+function splanFlags(c){
+  const sp=spStore(c); const out=[];
+  if(sp.burdenMethod==="flat"){
+    const p=+sp.flatPct||0;
+    if(p>0.40) out.push("The flat rate is "+Math.round(p*100)+"% — unusually high. Double-check it's what your FMS actually charges.");
+    if(p>0 && p<0.05) out.push("The flat rate is only "+Math.round(p*100)+"% — that seems too low to cover employer taxes and workers' comp. Confirm it.");
+  }
+  sp.workers.forEach(w=>{
+    if(!(+w.wage>0 && +w.hrs>0 && +w.weeks>0)) return;
+    const nm=(w.name&&w.name.trim())?w.name.trim():"a worker";
+    const wph=trueWagePerHr(w,sp);
+    if(wph>0 && wph<CA_MIN_WAGE){
+      if(sp.rateBasis==="loaded") out.push("Budget rate for "+nm+" backs out to a wage of "+money(wph)+"/hr — below California's "+money(CA_MIN_WAGE)+" minimum wage. The budget rate per hour is too low; raise it.");
+      else out.push(nm+"'s wage of "+money(wph)+"/hr is below California's "+money(CA_MIN_WAGE)+" statewide minimum wage (many cities require more) — verify.");
+    }
+    const lc=loadedCost(w,sp);
+    if(lc.wages>0 && sp.burdenMethod==="detailed"){
+      const bp=lc.burden/lc.wages;
+      if(bp>0.60) out.push("Employer cost for "+nm+" is "+Math.round(bp*100)+"% of wages — unusually high. Check the workers' comp rate in the rates section.");
+    }
+    const rc=rcWorkerRow(c,w);
+    if(rc.rate>0 && rc.adjRate < rc.rate-0.001) out.push("Adjusted rate for "+nm+" is below the wage — check the numbers.");
+  });
+  return out;
+}
 function splanTotals(c){
   const sp=spStore(c);
   const wTot=sp.workers.reduce((s,w)=>s+rcWorkerRow(c,w).amount,0);
@@ -2147,6 +2173,11 @@ function renderSplan(){
     </div>
     <p class="muted">${flatOn?('Flat method: each worker\'s employer cost = wages × '+flatPctN+'%'+(sp.flatInclFms?', which also absorbs the FMS fee — matching how Cambrian presents budgets.':'.')):"Detailed method: the app adds actual employer taxes + workers' comp to each worker's wages."}</p>
     ${sp.rateBasis==='loaded'?`<p class="muted" style="color:var(--blue-dark)">Budget-rate mode: the $/hr you type is the total the budget pays per hour (the Adjusted Rate). The app backs out the actual wage to pay the worker (shown under each rate) so the loaded cost equals what you entered.</p>`:''}
+    <details style="margin-bottom:10px"><summary style="font-size:13px">❓ Which settings should I use?</summary><div class="muted" style="font-size:13px;line-height:1.6">
+      <p><strong>Employer cost method:</strong> Use <strong>Flat %</strong> if your FMS (like Cambrian) budgets a single percentage that covers employer taxes + their fee — enter that % on the client's record and it fills in here. Use <strong>Detailed</strong> if you want the app to calculate the actual payroll taxes and workers' comp per worker.</p>
+      <p><strong>The $/hr you enter:</strong> Choose <strong>Worker wage → add burden</strong> if you're typing what the worker is paid (the budget line then comes out higher). Choose <strong>Budget rate → back out wage</strong> if the RC/FMS gave you a fixed rate per hour for that line and you need to know the wage to actually pay (the app shows "pays $X/hr" under each rate).</p>
+      <p style="color:var(--amber)">Not sure which the FMS uses? Match one real line from a past spending plan both ways and see which total matches theirs.</p>
+    </div></details>
     <table><tr><th>Worker</th><th>Code</th><th>$/hr</th><th>Hrs/wk</th><th>Wks/yr</th><th class="right">Wages</th><th class="right">+Employer cost</th><th>1-time $</th><th class="right">Line total</th><th></th></tr>`;
     sp.workers.forEach((w,i)=>{
       const lc=loadedCost(w,sp); const rc=rcWorkerRow(c,w);
@@ -2162,6 +2193,7 @@ function renderSplan(){
     });
     html+=`<tr><td colspan="7" class="right"><strong>Workers total (loaded)</strong></td><td class="right"><strong>${money(t.wTot)}</strong></td><td></td></tr></table>
     <button class="btn small" onclick="spAddWorker('${c.id}')">+ Add worker</button>
+    ${(()=>{const fl=splanFlags(c);return fl.length?`<div class="alert amber" style="margin-top:12px"><strong>⚠ Please double-check:</strong><ul style="margin:6px 0 0;padding-left:20px">${fl.map(x=>`<li>${x}</li>`).join('')}</ul></div>`:'';})()}
     ${flatOn?"":`<details style="margin-top:10px"><summary>Employer cost rates (2026 CA defaults — edit if your FMS differs)</summary><div class="row">
       ${[['ss','Social Security','%'],['med','Medicare','%'],['futa','FUTA','%'],['ui','CA UI','%'],['ett','ETT','%'],['wc','Workers comp','%'],['sick','Sick/benefits','%']].map(([k,l])=>`<div><label>${l}</label><input type="number" step="0.001" value="${sp.rates[k]}" onchange="spRate('${c.id}','${k}',this.value)"></div>`).join('')}
     </div><p class="muted">FUTA/UI/ETT apply only to each worker's first $7,000. CA SDI is employee-withheld, so it's excluded. FMS remits all of these — the plan still budgets them.</p></details>`}</div>`;
