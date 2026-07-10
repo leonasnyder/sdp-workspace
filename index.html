@@ -908,6 +908,7 @@ const GENERIC_GUIDE = {
  community:{name:"Natural & community supports",what:"Free community programs, recreation, classes, family, friends, and volunteers.",do:"Note what you tried. SDP funds paid 1:1 support only where natural/community supports can't meet the need."},
  none:{name:"No generic source responsible",what:"This is a disability-specific need with no public program obligated to provide it.",do:"State plainly that no generic resource covers it and briefly say why the need is disability-related."}
 };
+let editingGoal=null;
 function goalMigrate(c){ if(!c.goals) c.goals=[]; }
 function renderGoals(){
   const el=document.getElementById("view-goals");
@@ -925,11 +926,20 @@ function renderGoals(){
       const spent=linked.reduce((s,i)=>s+spentForItem(c,i.id),0);
       const asked=linked.reduce((s,i)=>s+(+i.annual||0),0);
       const sug=LIFE_AREAS[g.area]||[];
-      html+=`<div class="card"><div class="flexbtw"><h3 class="mt0">🎯 ${esc(g.title)}</h3>
-      <span><span class="badge blue">${esc(g.area)}</span>
-      <select style="width:auto;display:inline-block;margin-left:6px" onchange="goalField('${c.id}','${g.id}','status',this.value)">
-      ${["Planned","In progress","Achieved","Paused"].map(s=>`<option ${g.status===s?"selected":""}>${s}</option>`).join("")}</select>
-      <span class="del-x" onclick="delGoal('${c.id}','${g.id}')">✕</span></span></div>`;
+      html+=`<div class="card">`;
+      if(editingGoal===g.id){
+        html+=`<div class="row" style="align-items:flex-end">
+        <div style="flex:2"><label>Goal / desired outcome</label><input id="eg_title_${g.id}" value="${esc(g.title)}"></div>
+        <div><label>Life area</label><select id="eg_area_${g.id}">${Object.keys(LIFE_AREAS).map(a=>`<option ${a===g.area?"selected":""}>${a}</option>`).join("")}</select></div>
+        <div><button class="btn small" onclick="saveEditGoal('${c.id}','${g.id}')">Save</button> <button class="btn small secondary" onclick="cancelEditGoal()">Cancel</button></div></div>`;
+      } else {
+        html+=`<div class="flexbtw"><h3 class="mt0">🎯 ${esc(g.title)}</h3>
+        <span style="display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="badge blue">${esc(g.area)}</span>
+        <select style="width:auto;display:inline-block" onchange="goalField('${c.id}','${g.id}','status',this.value)">
+        ${["Planned","In progress","Achieved","Paused"].map(s=>`<option ${g.status===s?"selected":""}>${s}</option>`).join("")}</select>
+        <button class="btn small secondary" onclick="startEditGoal('${g.id}')">✎ Edit</button>
+        <button class="btn small secondary" style="color:var(--red);border-color:var(--red)" onclick="delGoal('${c.id}','${g.id}')">🗑 Delete</button></span></div>`;
+      }
       if(linked.length){
         html+=`<p class="muted">Tied to budget: ${linked.map(i=>esc(i.code)+" — "+esc(i.desc)).join(" · ")} | requested ${money(asked)}/yr · spent ${money(spent)}</p>`;
       }
@@ -1010,8 +1020,18 @@ function addGoal(cid){
   c.goals.push({id:uid(),title:t,area:v("g_area"),status:"Planned",result:""});
   save(); renderGoals();
 }
-function delGoal(cid,gid){ const c=getClient(cid); if(confirm("Remove this goal? (Linked budget lines stay.)")){c.goals=c.goals.filter(g=>g.id!==gid); save(); renderGoals();} }
+function delGoal(cid,gid){ const c=getClient(cid); if(confirm("Delete this goal? (Any budget lines you linked to it stay in the spending plan.)")){c.goals=c.goals.filter(g=>g.id!==gid); if(editingGoal===gid)editingGoal=null; save(); renderGoals();} }
 function goalField(cid,gid,f,val){ const c=getClient(cid); const g=c.goals.find(x=>x.id===gid); g[f]=val; save(); if(f==="status")renderGoals(); }
+function startEditGoal(gid){ editingGoal=gid; renderGoals(); }
+function cancelEditGoal(){ editingGoal=null; renderGoals(); }
+function saveEditGoal(cid,gid){
+  const c=getClient(cid); const g=c.goals.find(x=>x.id===gid); if(!g) return;
+  const t=(document.getElementById("eg_title_"+gid)||{}).value||"";
+  const a=(document.getElementById("eg_area_"+gid)||{}).value||"";
+  if(!t.trim()){ alert("The goal can't be empty."); return; }
+  g.title=t.trim(); if(a) g.area=a;
+  editingGoal=null; save(); renderGoals();
+}
 function addGoalService(cid,gid,si){
   const c=getClient(cid); const g=c.goals.find(x=>x.id===gid);
   const s=LIFE_AREAS[g.area][si]; const sc=SERVICE_CODES.find(x=>x.code===s.code);
