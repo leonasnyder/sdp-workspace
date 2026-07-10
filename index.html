@@ -94,7 +94,16 @@ details>div{padding:4px 16px 14px}
 .right{text-align:right}
 .mt0{margin-top:0}
 .flexbtw{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
-.del-x{color:var(--red);cursor:pointer;font-weight:700;padding:0 6px}
+.del-x{color:var(--red);cursor:pointer;font-weight:700;padding:0 6px;background:none;border:none;font-size:15px;line-height:1}
+/* ── Accessibility ── */
+:focus-visible{outline:3px solid #1d4ed8;outline-offset:2px;border-radius:4px}
+.skip-link{position:absolute;left:-9999px;top:0;background:#fff;color:#1e40af;padding:10px 16px;font-weight:600;z-index:3000;border:2px solid #1d4ed8;border-radius:0 0 8px 0}
+.skip-link:focus{left:0}
+nav button.active{outline:none}
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{transition-duration:.001ms!important;animation-duration:.001ms!important}
+  .card:hover,button.btn:hover,nav button{transform:none!important}
+}
 #printArea{display:none}
 @media print{
   body *{visibility:hidden}
@@ -108,6 +117,7 @@ details>div{padding:4px 16px 14px}
 </style>
 </head>
 <body>
+<a href="#mainContent" class="skip-link">Skip to main content</a>
 <header>
   <div>
     <h1>Horizons of Hope — SDP Workspace</h1>
@@ -123,8 +133,8 @@ details>div{padding:4px 16px 14px}
     <button id="signoutBtn" onclick="signOut()" style="display:none">↩ Sign out</button>
   </div>
 </header>
-<nav id="mainNav">
-  <button data-view="dashboard" class="active">📊 Dashboard</button>
+<nav id="mainNav" aria-label="Main sections">
+  <button data-view="dashboard" class="active" aria-current="page">📊 Dashboard</button>
   <button data-view="clients">👥 Clients</button>
   <button data-view="process">🗺️ Process</button>
   <button data-view="budget">💰 Budget</button>
@@ -137,7 +147,7 @@ details>div{padding:4px 16px 14px}
   <button data-view="rcs">🏛️ Regional Centers</button>
   <button data-view="resources">📚 Resources</button>
 </nav>
-<main>
+<main id="mainContent" tabindex="-1">
 <div class="view active" id="view-dashboard"></div>
 <div class="view" id="view-clients"></div>
 <div class="view" id="view-process"></div>
@@ -305,11 +315,30 @@ document.getElementById("mainNav").addEventListener("click",e=>{
   if(e.target.dataset.view) showView(e.target.dataset.view);
 });
 function showView(v){
-  document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===v));
+  document.querySelectorAll("nav button").forEach(b=>{ const on=b.dataset.view===v; b.classList.toggle("active",on); if(on){b.setAttribute("aria-current","page");}else{b.removeAttribute("aria-current");} });
   document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));
   document.getElementById("view-"+v).classList.add("active");
   render(v);
+  upgradeA11y();
 }
+/* Make icon-only ✕ delete controls keyboard-accessible + labelled (runs after each render) */
+function upgradeA11y(){
+  try{
+    document.querySelectorAll(".del-x").forEach(b=>{
+      if(!b.hasAttribute("tabindex")) b.setAttribute("tabindex","0");
+      if(!b.hasAttribute("role")) b.setAttribute("role","button");
+      if(!b.getAttribute("aria-label")) b.setAttribute("aria-label", b.getAttribute("title")||"Remove");
+    });
+  }catch(e){}
+}
+document.addEventListener("keydown",function(e){
+  if((e.key==="Enter"||e.key===" ")&&e.target&&e.target.classList&&e.target.classList.contains("del-x")){ e.preventDefault(); e.target.click(); }
+});
+try{
+  const _a11yObs=new MutationObserver(()=>{ upgradeA11y(); });
+  const _mc=document.getElementById("mainContent")||document.body;
+  if(_mc) _a11yObs.observe(_mc,{childList:true,subtree:true});
+}catch(e){}
 function renderAll(){ ["dashboard","clients","process","budget","splan","goals","compliance","pcp","forms","docs","rcs","resources"].forEach(render); }
 function render(v){ ({dashboard:renderDashboard,clients:renderClients,process:renderProcess,budget:renderBudget,splan:renderSplan,goals:renderGoals,compliance:renderCompliance,pcp:renderPCP,forms:renderForms,docs:renderDocs,rcs:renderRCs,resources:renderResources})[v](); }
 
