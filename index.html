@@ -295,21 +295,22 @@ function importData(ev){
 
 /* ================= BROWSER CHECK ================= */
 (function(){
-  if(window.showDirectoryPicker) return; /* Chrome/Edge — all good */
+  if(window.showDirectoryPicker) return; /* Chrome/Edge — full features */
+  try{ if(localStorage.getItem("ifsdp_browsernote")==="dismissed") return; }catch(e){}
+  const isIpad=/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
   const main=document.querySelector("main");
   const d=document.createElement("div");
   d.className="alert amber";
-  d.innerHTML='<strong>You\'re in a browser without folder access (like Safari).</strong> The app works, but auto-backup, document filing, and the RC forms library are off. '+
-  '<button class="btn small secondary" onclick="copyAppPath()" style="margin:0 4px">Copy this file\'s location</button> then open Chrome and paste it in the address bar. '+
-  'To make double-clicking always use Chrome: in Finder, right-click the app file → <em>Get Info</em> → <em>Open with:</em> Google Chrome → <em>Change All…</em>';
+  d.id="browserNote";
+  d.innerHTML='<strong>Heads up — you\'re on '+(isIpad?'an iPad/iPhone':'Safari or Firefox')+'.</strong> Everything you need still works here: clients, budgets, the spending plan, goals, compliance, forms, and generating documents. '+
+  'The only things this browser can\'t do are the <em>automatic</em> Google-Drive backup and storing uploaded files inside the app — those need Chrome or Edge on a computer.'+
+  '<div style="margin-top:6px;font-size:13px">✔ <strong>Do use the <span style="white-space:nowrap">⬇ Backup data</span></strong> button (top right) regularly to save your work — that works in every browser.'+
+  (isIpad?' On iPad, your saved reports and documents open beautifully in the <strong>Google Drive</strong> or <strong>Files</strong> app.':'')+
+  ' For the full experience, open this site in <strong>Chrome</strong> on a computer.</div>'+
+  '<button class="btn small secondary" style="margin-top:8px" onclick="dismissBrowserNote()">Got it</button>';
   main.insertBefore(d,main.firstChild);
 })();
-function copyAppPath(){
-  navigator.clipboard.writeText(location.href).then(
-    ()=>alert("Copied! Open Chrome, click the address bar, paste (Cmd+V), and press Enter. Your client data will come along via your backup file if needed (Restore button)."),
-    ()=>prompt("Copy this address, then paste it into Chrome:",location.href)
-  );
-}
+function dismissBrowserNote(){ try{ localStorage.setItem("ifsdp_browsernote","dismissed"); }catch(e){} const n=document.getElementById("browserNote"); if(n) n.remove(); }
 /* ================= NAV ================= */
 document.getElementById("mainNav").addEventListener("click",e=>{
   if(e.target.dataset.view) showView(e.target.dataset.view);
