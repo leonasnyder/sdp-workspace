@@ -273,9 +273,11 @@ function markBackedUp(){ try{ localStorage.setItem("ifsdp_lastbackup", String(Da
 function backupHealth(){
   const hasClients=(DB.clients||[]).length>0;
   let last=0; try{ last=+localStorage.getItem("ifsdp_lastbackup")||0; }catch(e){}
-  const auto=(typeof backupDir!=="undefined"&&backupDir);
+  const supported=!!(window.showDirectoryPicker && window.indexedDB);
+  const auto=!!(typeof backupDir!=="undefined"&&backupDir);
+  const needsReconnect=!auto && hasSavedDir;
   const days=last?Math.floor((Date.now()-last)/86400000):null;
-  return {hasClients, auto:!!auto, last, days, never:!last};
+  return {hasClients, supported, auto, needsReconnect, last, days, never:!last};
 }
 function exportData(){
   const blob = new Blob([JSON.stringify(DB,null,2)],{type:"application/json"});
@@ -389,9 +391,10 @@ function renderDashboard(){
   let backupBanner="";
   if(bh.hasClients){
     if(bh.auto) backupBanner=`<div class="alert green">🔒 Auto-backup is on — your data saves automatically to your chosen folder.${bh.days!==null&&bh.days>0?" Last saved "+bh.days+" day"+(bh.days>1?"s":"")+" ago.":" Last saved just now."}</div>`;
-    else if(bh.never) backupBanner=`<div class="alert red">⚠ <strong>Your data has never been backed up.</strong> It lives only in this browser — clearing history or switching computers would lose it. Click <strong>📁 Set up auto-backup</strong> or <strong>⬇ Backup data</strong> (top right) now.</div>`;
-    else if(bh.days>=3) backupBanner=`<div class="alert red">⚠ <strong>It's been ${bh.days} days since your last backup.</strong> Click <strong>⬇ Backup data</strong> (top right) — or turn on 📁 auto-backup so it's automatic.</div>`;
-    else backupBanner=`<div class="alert green">🔒 Last backed up ${bh.days===0?"today":bh.days+" day"+(bh.days>1?"s":"")+" ago"}. Tip: turn on 📁 auto-backup to make it automatic.</div>`;
+    else if(bh.needsReconnect) backupBanner=`<div class="alert amber">🔌 <strong>Auto-backup needs reconnecting.</strong> Browsers drop folder access after they fully close. Your work is safe up to your last backup (${bh.days===0?"today":bh.days+" day"+(bh.days>1?"s":"")+" ago"}) — click <strong>📁 Reconnect auto-backup</strong> (top right) to resume automatic saving.</div>`;
+    else if(bh.never) backupBanner=`<div class="alert red">⚠ <strong>Your data has never been backed up.</strong> It lives only in this browser — clearing history or switching computers would lose it. Click <strong>${bh.supported?"📁 Set up auto-backup</strong> or <strong>⬇ Backup data":"⬇ Backup data"}</strong> (top right) now${bh.supported?"":", then save the file into Google Drive or Files"}.</div>`;
+    else if(bh.days>=3) backupBanner=`<div class="alert red">⚠ <strong>It's been ${bh.days} days since your last backup.</strong> Click <strong>⬇ Backup data</strong> (top right)${bh.supported?" — or turn on 📁 auto-backup so it's automatic":""}.</div>`;
+    else backupBanner=`<div class="alert green">🔒 Last backed up ${bh.days===0?"today":bh.days+" day"+(bh.days>1?"s":"")+" ago"}.${bh.supported?" Tip: turn on 📁 auto-backup to make it automatic.":" Keep using ⬇ Backup data regularly."}</div>`;
   }
   let html=`<h2>Dashboard</h2><p class="hint">Caseload overview. Everything is saved automatically in this browser. Turn on 📁 auto-backup (top right) to also save each client's file to a folder you choose — point it at Google Drive for Desktop and it syncs to the cloud.</p>
   ${backupBanner}
@@ -1030,7 +1033,7 @@ function copyUpdate(cid){
 /* Uses the File System Access API (Chrome/Edge). Pick a folder once — e.g. your
    Google Drive for Desktop folder > "IF Clients 2026" — and every change is saved
    automatically to <folder>/<Client Name>/ . Google Drive then syncs it to the cloud. */
-let backupDir = null, backupTimer = null;
+let backupDir = null, backupTimer = null, hasSavedDir = false;
 
 function idb(){ return new Promise((res,rej)=>{ const r=indexedDB.open("ifsdp_fs",1);
   r.onupgradeneeded=()=>r.result.createObjectStore("h");
@@ -1046,16 +1049,19 @@ async function setupBackup(){
   try{
     backupDir = await showDirectoryPicker({mode:"readwrite"});
     await idbSet("dir", backupDir);
+    hasSavedDir=true;
     await writeBackup();
     alert("Auto-backup is on. Everything will now save to \""+backupDir.name+"\" — each client gets their own folder. If this folder is inside Google Drive for Desktop, it syncs to the cloud automatically.");
-    renderBackupBtn();
+    refreshBackupUI();
   }catch(e){ if(e.name!=="AbortError") alert("Could not set up the folder: "+e.message); }
 }
 async function reconnectBackup(){
   const h = await idbGet("dir");
   if(!h){ setupBackup(); return; }
+  hasSavedDir=true;
   const p = await h.requestPermission({mode:"readwrite"});
-  if(p==="granted"){ backupDir=h; renderBackupBtn(); writeBackup(); }
+  if(p==="granted"){ backupDir=h; refreshBackupUI(); writeBackup(); }
+  else refreshBackupUI();
 }
 function scheduleBackup(){
   if(!backupDir) return;
@@ -1087,17 +1093,19 @@ async function writeFile(dirHandle,name,content){
 }
 function renderBackupBtn(){
   const b=document.getElementById("bkBtn"); if(!b) return;
-  b.innerHTML = backupDir ? "📁 Auto-backup: ON ("+esc(backupDir.name)+")" : "📁 Set up auto-backup";
+  b.innerHTML = backupDir ? "📁 Auto-backup: ON ("+esc(backupDir.name)+")" : (hasSavedDir ? "📁 Reconnect auto-backup" : "📁 Set up auto-backup");
 }
+function refreshBackupUI(){ renderBackupBtn(); if(document.getElementById("view-dashboard")) renderDashboard(); }
 async function initBackup(){
   if(!window.indexedDB || !window.showDirectoryPicker){ bkStatus("auto-backup needs Chrome/Edge",false); return; }
   try{
     const h = await idbGet("dir");
-    if(!h){ bkStatus("auto-backup off",false); return; }
+    if(!h){ hasSavedDir=false; bkStatus("auto-backup off",false); return; }
+    hasSavedDir=true;
     const p = await h.queryPermission({mode:"readwrite"});
-    if(p==="granted"){ backupDir=h; renderBackupBtn(); bkStatus("auto-backup ready",true); writeBackup(); }
-    else bkStatus("click Auto-backup to reconnect \""+h.name+"\"",false);
-  }catch(e){ bkStatus("auto-backup off",false); }
+    if(p==="granted"){ backupDir=h; bkStatus("auto-backup ready",true); refreshBackupUI(); writeBackup(); }
+    else { bkStatus("click to reconnect \""+h.name+"\"",false); refreshBackupUI(); }
+  }catch(e){ bkStatus("auto-backup off",false); refreshBackupUI(); }
 }
 initBackup();
 </script>
