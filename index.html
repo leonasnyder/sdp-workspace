@@ -533,6 +533,8 @@ function renderProcess(){
   let html=`<h2>Process Tracker</h2><p class="hint">The SDP journey from first interest to ongoing facilitation. Check steps off per client; add a date, a note, and the supporting document for each. Files are stored in that client's Documents backup folder — connect 📁 auto-backup to save the files themselves.</p>${pickerHtml("process")}`;
   const c=getClient(picked.process);
   if(c){
+    if(!Array.isArray(c.steps)) c.steps=[];
+    while(c.steps.length<PROCESS_STEPS.length) c.steps.push({done:false,date:"",note:""});
     const done=c.steps.filter(s=>s.done).length;
     html+=`<div class="card"><div class="flexbtw"><h3 class="mt0">${esc(c.name)} — ${done}/${PROCESS_STEPS.length} steps complete</h3>
     <span class="badge ${done===PROCESS_STEPS.length?"green":"blue"}">${done===PROCESS_STEPS.length?"Complete":"In progress"}</span></div>
@@ -1175,8 +1177,34 @@ function scheduleBackup(){
   clearTimeout(backupTimer);
   backupTimer=setTimeout(writeBackup,1500);
 }
+async function readMasterBackup(){
+  try{
+    const fh=await backupDir.getFileHandle("ALL-CLIENTS-master-backup.json");
+    const f=await fh.getFile();
+    return JSON.parse(await f.text());
+  }catch(e){ return null; }
+}
+async function autoRestoreFromBackup(){
+  /* If this browser's local data is empty but the connected backup folder has clients,
+     load them automatically so the user never has to click Restore. Never clobbers non-empty local data. */
+  if(!backupDir) return false;
+  if(DB.clients && DB.clients.length) return false;
+  const m=await readMasterBackup();
+  if(m && m.clients && m.clients.length){
+    DB=m; save(); renderAll();
+    bkStatus("✓ restored "+m.clients.length+" client"+(m.clients.length>1?"s":"")+" from your backup",true);
+    return true;
+  }
+  return false;
+}
 async function writeBackup(){
   if(!backupDir) return;
+  if(!(DB.clients && DB.clients.length)){
+    /* Safety: don't overwrite a good backup with an empty local store — restore from it instead. */
+    const restored=await autoRestoreFromBackup();
+    if(!restored) bkStatus("auto-backup ready — no data to save yet",true);
+    return;
+  }
   try{
     /* master backup of everything */
     await writeFile(backupDir,"ALL-CLIENTS-master-backup.json",JSON.stringify(DB,null,2));
@@ -1406,6 +1434,19 @@ function renderDocs(){
       <td>${e.file?`<a href="#" onclick="openDoc('${c.id}','${esc(e.file)}');return false">📄 ${esc(e.file)}</a>`:`<input type="file" style="width:180px" onchange="uploadDoc('${c.id}','${r.k}',this)">`}</td>
       <td><input value="${esc(e.note||"")}" placeholder="e.g. asked SC 6/12" onchange="reqDocField('${c.id}','${r.k}','note',this.value)"></td></tr>`;
     });
+    html+=`</table></div>`;
+    /* Documents attached to Process-tracker steps */
+    const stepDocs=(c.steps||[]).map((st,i)=>({st,i})).filter(x=>x.st&&x.st.file);
+    html+=`<div class="card"><h3 class="mt0">Process step documents</h3>
+    <p class="muted">Files attached to steps on the <strong>Process</strong> tab. Add or remove them there.</p>
+    <table><tr><th>Step</th><th>Date</th><th>File</th><th>Note</th></tr>`;
+    stepDocs.forEach(({st,i})=>{
+      html+=`<tr><td>${i+1}. ${esc(PROCESS_STEPS[i]?PROCESS_STEPS[i].t:"")}</td>
+      <td>${esc(st.date||"")}</td>
+      <td>${st.stored?`<a href="#" onclick="openDoc('${c.id}','${esc(st.file)}');return false">📄 ${esc(st.file)}</a>`:esc(st.file)+' <span class="muted">(not stored — no backup folder)</span>'}</td>
+      <td>${esc(st.note||"")}</td></tr>`;
+    });
+    if(!stepDocs.length) html+=`<tr><td colspan="4" class="muted">No step documents yet — attach them on the Process tab.</td></tr>`;
     html+=`</table></div>`;
     html+=`<div class="card"><h3 class="mt0">Other documents (anything from the client or regional center)</h3>
     <div class="row"><div><label>Category</label><select id="od_cat">${["PCP slides/materials","IPP report","RC correspondence","Assessment","Denial letter (generic services)","Bid/quote","Invoice/receipt","Other"].map(x=>`<option>${x}</option>`).join("")}</select></div>
