@@ -530,7 +530,7 @@ function pickerHtml(view){
 /* ================= PROCESS TRACKER ================= */
 function renderProcess(){
   const el=document.getElementById("view-process");
-  let html=`<h2>Process Tracker</h2><p class="hint">The SDP journey from first interest to ongoing facilitation. Check steps off per client; add dates and notes.</p>${pickerHtml("process")}`;
+  let html=`<h2>Process Tracker</h2><p class="hint">The SDP journey from first interest to ongoing facilitation. Check steps off per client; add a date, a note, and the supporting document for each. Files are stored in that client's Documents backup folder — connect 📁 auto-backup to save the files themselves.</p>${pickerHtml("process")}`;
   const c=getClient(picked.process);
   if(c){
     const done=c.steps.filter(s=>s.done).length;
@@ -544,6 +544,7 @@ function renderProcess(){
       <div class="step-body"><div class="step-title">${i+1}. ${s.t}</div><div class="step-desc">${s.d}</div>
       <div class="row"><div><label>Date</label><input type="date" value="${esc(st.date)}" onchange="stepField('${c.id}',${i},'date',this.value)"></div>
       <div style="flex:3"><label>Note</label><input value="${esc(st.note)}" placeholder="e.g. orientation certificate received" onchange="stepField('${c.id}',${i},'note',this.value)"></div></div>
+      <div><label>Supporting document</label>${st.file?`${st.stored?`<a href="#" onclick="openDoc('${c.id}','${esc(st.file)}');return false">📄 ${esc(st.file)}</a>`:`📄 ${esc(st.file)} <span class="muted" style="font-size:11px">(filename saved — connect 📁 auto-backup to store the file)</span>`} <button class="btn small secondary" onclick="removeStepDoc('${c.id}',${i})">Remove</button>`:`<input type="file" onchange="uploadStepDoc('${c.id}',${i},this)">`}</div>
       </div></li>`;
     });
     html+=`</ul></div>`;
@@ -552,6 +553,17 @@ function renderProcess(){
 }
 function toggleStep(cid,i,val){ const c=getClient(cid); c.steps[i].done=val; if(val&&!c.steps[i].date)c.steps[i].date=today(); save(); renderProcess(); renderDashboard(); }
 function stepField(cid,i,f,val){ getClient(cid).steps[i][f]=val; save(); }
+async function uploadStepDoc(cid,i,input){
+  const c=getClient(cid); const file=input.files[0]; if(!file) return;
+  const st=c.steps[i];
+  try{
+    const stored=await saveDocFile(c,file,("Step "+(i+1)+" "+PROCESS_STEPS[i].t).slice(0,40));
+    st.file=stored||file.name; st.stored=!!stored;
+    if(!stored) alert("Filename saved to this step. To store the file itself, connect 📁 auto-backup first, then upload again.");
+  }catch(e){ alert("Could not save the file: "+e.message); }
+  save(); renderProcess();
+}
+function removeStepDoc(cid,i){ const c=getClient(cid); if(confirm("Remove this document from the step? (If it was stored, the file stays in the backup folder.)")){ const st=c.steps[i]; st.file=""; st.stored=false; save(); renderProcess(); } }
 
 /* ================= BUDGET & SPENDING ================= */
 function renderBudget(){
