@@ -259,7 +259,8 @@ function load(){
   try{ const d = JSON.parse(localStorage.getItem(LS_KEY)); if(d) return d; }catch(e){}
   return {clients:[], rcNotes:{}, seq:1};
 }
-function save(){ localStorage.setItem(LS_KEY, JSON.stringify(DB)); if(typeof scheduleBackup==="function") scheduleBackup(); }
+function saveLocal(){ localStorage.setItem(LS_KEY, JSON.stringify(DB)); if(typeof scheduleBackup==="function") scheduleBackup(); }
+function save(){ saveLocal(); if(typeof scheduleCloudPush==="function") scheduleCloudPush(); }
 function uid(){ return "id"+(DB.seq++); }
 function money(n){ return (n||0).toLocaleString("en-US",{style:"currency",currency:"USD"}); }
 function esc(s){ return (s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
@@ -436,10 +437,12 @@ function renderDashboard(){
 let editingClient=null;
 function renderClients(){
   const el=document.getElementById("view-clients");
-  let html=`<h2>Clients</h2><p class="hint">Add each SDP participant you support. All other tabs draw from this list.</p>`;
+  let html=`<h2>Clients</h2><p class="hint">Add each SDP participant you support. All other tabs draw from this list. <span id="cloudBadge" class="muted" style="font-size:12px"></span></p>`;
   html+=`<div class="card"><table><tr><th>Name</th><th>Regional center</th><th>Plan year</th><th>Annual budget</th><th>FMS</th><th></th><th></th></tr>`;
   DB.clients.forEach(c=>{
-    html+=`<tr><td><strong>${esc(c.name)}</strong></td><td>${esc(c.rc)}</td>
+    const edited=(typeof clientEditedLine==="function")?clientEditedLine(c):"";
+    const badge=(typeof clientBadge==="function")?clientBadge(c):"";
+    html+=`<tr><td><strong>${esc(c.name)}</strong>${badge}${edited}</td><td>${esc(c.rc)}</td>
     <td>${esc(c.planStart)} → ${esc(c.planEnd)}</td><td>${money(+c.budget)}</td><td>${esc(c.fms)} ${c.fmsModel?'<span class="badge blue">'+esc(c.fmsModel)+'</span>':''}</td>
     <td><button class="btn small secondary" onclick="editClient('${c.id}')">Edit</button></td>
     <td><span class="del-x" title="Delete" onclick="delClient('${c.id}')">✕</span></td></tr>`;
@@ -448,6 +451,7 @@ function renderClients(){
   html+=`</table><button class="btn" onclick="editClient(null)">+ Add client</button></div>`;
   html+=`<div id="clientForm"></div>`;
   el.innerHTML=html;
+  if(typeof cloudSyncBadge==="function") cloudSyncBadge();
   if(editingClient!==undefined && editingClient!==null) drawClientForm();
 }
 function editClient(id){
@@ -455,10 +459,16 @@ function editClient(id){
   drawClientForm();
 }
 function delClient(id){
-  const c=getClient(id);
-  if(confirm("Delete "+(c.name||"this client")+" and all their data?")){
-    DB.clients=DB.clients.filter(x=>x.id!==id); save(); renderAll();
-  }
+  const c=getClient(id); if(!c) return;
+  if(!confirm("Delete "+(c.name||"this client")+" and all their data?")) return;
+  const removeLocal=()=>{ DB.clients=DB.clients.filter(x=>x.id!==id); if(typeof cloudSnapshot!=="undefined") delete cloudSnapshot[id]; save(); renderAll(); };
+  if(typeof cloudReady==="function" && cloudReady() && c._owner){
+    cloudDeleteClient(id).then(r=>{
+      if(r&&r.ok) removeLocal();
+      else if(r&&r.error) alert(r.error); // e.g. only the owner can delete
+      else removeLocal(); // offline: remove locally, server catches up
+    });
+  } else removeLocal();
 }
 function drawClientForm(){
   const c=editingClient; if(!c) return;
@@ -502,7 +512,8 @@ function drawClientForm(){
   </div>
   <label>Notes</label><textarea id="cf_notes">${esc(c.notes)}</textarea>
   <button class="btn" onclick="saveClient()">Save client</button>
-  <button class="btn secondary" onclick="editingClient=null;renderClients()">Cancel</button></div>`;
+  <button class="btn secondary" onclick="editingClient=null;renderClients()">Cancel</button></div>
+  ${(!isNew && typeof clientShareHtml==="function")?clientShareHtml(c):""}`;
 }
 function saveClient(){
   const c=editingClient;
@@ -2110,7 +2121,7 @@ async function doLogin(){
   authMsg("Signing in…");
   try{
     const r=await fetch("/api/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:em,password:pw,device:deviceId()})}).then(x=>x.json());
-    if(r.ok){ lsSet("ifsdp_token",r.token); lsSet("ifsdp_okat",String(Date.now())); hideLanding(); showAcctButtons(); renderAll(); }
+    if(r.ok){ lsSet("ifsdp_token",r.token); lsSet("ifsdp_okat",String(Date.now())); lsSet("ifsdp_name",r.name||""); lsSet("ifsdp_email",em); hideLanding(); showAcctButtons(); renderAll(); if(typeof startCloud==="function") startCloud(em,r.name||""); }
     else authMsg(r.error||"Could not sign in.","#dc2626");
   }catch(e){ authMsg("Couldn't reach the server — try again in a moment.","#dc2626"); }
 }
@@ -2182,10 +2193,10 @@ async function initGate(){
     hideLanding();
     try{
       const v=await fetch("/api/verify",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({token:tok,device:deviceId()})}).then(r=>r.json());
-      if(v.ok){ lsSet("ifsdp_okat",String(Date.now())); showAcctButtons(); return; }
+      if(v.ok){ lsSet("ifsdp_okat",String(Date.now())); if(v.email)lsSet("ifsdp_email",v.email); if(v.name)lsSet("ifsdp_name",v.name); showAcctButtons(); if(typeof startCloud==="function") startCloud(v.email||lsGet("ifsdp_email"),v.name||lsGet("ifsdp_name")); return; }
       lsDel("ifsdp_token"); showLanding(); return;
     }catch(e){
-      if(Date.now()-(+lsGet("ifsdp_okat")||0) < 7*86400000){ showAcctButtons(); return; } /* offline grace */
+      if(Date.now()-(+lsGet("ifsdp_okat")||0) < 7*86400000){ showAcctButtons(); if(typeof startCloud==="function") startCloud(lsGet("ifsdp_email"),lsGet("ifsdp_name")); return; } /* offline grace */
       showLanding(); return;
     }
   }
@@ -2636,6 +2647,132 @@ function splanImportFile(cid,input){
   if(/\.csv$/i.test(f.name)){ const r=new FileReader(); r.onload=()=>handleGrid((typeof parseCSV==="function")?parseCSV(r.result):[]); r.readAsText(f); return; }
   loadSheetJs().then(()=>{ const r=new FileReader(); r.onload=()=>{ try{ const wb=XLSX.read(new Uint8Array(r.result),{type:"array"}); handleGrid(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:true,defval:""})); }catch(e){ splanImpMsg("Could not read that spreadsheet: "+e.message,false); } }; r.readAsArrayBuffer(f); })
     .catch(()=>splanImpMsg("Reading .xlsx needs internet the first time. Or save as .csv and upload that.",false));
+}
+</script>
+<script>
+/* ================= LIVE CLOUD SYNC — shared clients + per-client sharing ================= */
+let curEmail=null, curName=null, cloudTimer=null, cloudPushTimer=null, cloudLastSync=null;
+const cloudSnapshot={};
+const CLIENT_META=["_v","_upAt","_upBy","_history","_shared","_isOwner","_owner"];
+function cloudReady(){ return (typeof BACKEND!=="undefined"&&BACKEND) && !!lsGet("ifsdp_token") && !!curEmail; }
+function clientCore(c){ const o={}; for(const k in c){ if(CLIENT_META.indexOf(k)<0) o[k]=c[k]; } return JSON.stringify(o); }
+function stripMeta(c){ return JSON.parse(clientCore(c)); }
+function rebuildSnapshot(){ for(const c of DB.clients) cloudSnapshot[c.id]=clientCore(c); }
+function fmtWhen(iso){ try{ const d=new Date(iso); return d.toLocaleDateString([], {month:"short",day:"numeric"})+" "+d.toLocaleTimeString([], {hour:"numeric",minute:"2-digit"}); }catch(e){ return ""; } }
+async function cloudApi(op,extra){
+  const token=lsGet("ifsdp_token"); if(!token) return null;
+  try{ return await fetch("/api/data",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({op,token},extra||{}))}).then(r=>r.json()); }
+  catch(e){ return null; }
+}
+async function startCloud(email,name){
+  curEmail=(email||curEmail||"").toLowerCase()||null; curName=name||curName||null;
+  if(!cloudReady()) return;
+  await cloudPull(true);
+  if(cloudTimer) clearInterval(cloudTimer);
+  cloudTimer=setInterval(cloudPoll,25000);
+}
+function cloudPoll(){
+  const a=document.activeElement;
+  if(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName||"")) return; /* don't disrupt active editing */
+  cloudPull(false);
+}
+async function cloudPull(initial){
+  if(!cloudReady()) return;
+  const r=await cloudApi("pull",{});
+  if(!r||!r.ok||!Array.isArray(r.clients)) return;
+  /* on a shared browser, don't merge/migrate a previous user's leftover local data */
+  if(DB._ownerEmail && DB._ownerEmail!==curEmail){ DB.clients=[]; for(const k in cloudSnapshot) delete cloudSnapshot[k]; }
+  let changed=cloudMerge(r.clients);
+  if(initial){
+    const cloudIds=new Set(r.clients.map(c=>c.id));
+    for(const c of DB.clients.slice()){ if(!cloudIds.has(c.id) && !c._owner){ await cloudSave(c); changed=true; } }
+  }
+  DB._ownerEmail=curEmail;
+  cloudLastSync=Date.now();
+  saveLocal();
+  if(changed||initial) renderAll();
+  cloudSyncBadge();
+}
+function cloudMerge(cloudClients){
+  let changed=false;
+  const byId={}; cloudClients.forEach(c=>byId[c.id]=c);
+  cloudClients.forEach(cc=>{
+    const idx=DB.clients.findIndex(x=>x.id===cc.id);
+    if(idx<0){ DB.clients.push(cc); cloudSnapshot[cc.id]=clientCore(cc); changed=true; }
+    else{
+      const local=DB.clients[idx];
+      const localCore=clientCore(local);
+      const unsynced = cloudSnapshot[cc.id]!==undefined && localCore!==cloudSnapshot[cc.id];
+      if(unsynced){ local._owner=cc._owner; local._shared=cc._shared; local._isOwner=cc._isOwner; }
+      else{ if(localCore!==clientCore(cc) || local._upAt!==cc._upAt) changed=true; DB.clients[idx]=cc; cloudSnapshot[cc.id]=clientCore(cc); }
+    }
+  });
+  const before=DB.clients.length;
+  DB.clients=DB.clients.filter(c=>{ if(byId[c.id]) return true; if(!c._owner) return true; delete cloudSnapshot[c.id]; return false; });
+  if(DB.clients.length!==before) changed=true;
+  return changed;
+}
+async function cloudSave(c){
+  if(!cloudReady()) return null;
+  const r=await cloudApi("save",{client:stripMeta(c), by:curName||curEmail});
+  if(r&&r.ok){ c._v=r.version; c._upAt=r.updatedAt; c._upBy=r.updatedBy; if(!c._owner) c._owner=curEmail; cloudSnapshot[c.id]=clientCore(c); saveLocal(); }
+  return r;
+}
+function scheduleCloudPush(){
+  if(!cloudReady()) return;
+  if(cloudPushTimer) clearTimeout(cloudPushTimer);
+  cloudPushTimer=setTimeout(cloudPushDirty,1200);
+}
+async function cloudPushDirty(){
+  if(!cloudReady()) return;
+  for(const c of DB.clients.slice()){ if(cloudSnapshot[c.id]!==clientCore(c)) await cloudSave(c); }
+  cloudLastSync=Date.now(); cloudSyncBadge();
+}
+async function cloudDeleteClient(id){ return await cloudApi("delete",{id}); }
+async function cloudShare(id,email,grant){ return await cloudApi(grant?"share":"unshare",{id,email}); }
+function cloudSyncBadge(){ const el=document.getElementById("cloudBadge"); if(!el) return; el.textContent = cloudReady()? ("· ☁ Live — synced "+(cloudLastSync?new Date(cloudLastSync).toLocaleTimeString([], {hour:"numeric",minute:"2-digit"}):"just now")) : ""; }
+function clientBadge(c){
+  if(!c._owner || !cloudReady()) return "";
+  if(c._owner!==curEmail) return ' <span class="badge amber">shared with you</span>';
+  if((c._shared||[]).filter(e=>e!==c._owner).length) return ' <span class="badge green">shared</span>';
+  return "";
+}
+function clientEditedLine(c){ return c._upBy?`<div class="muted" style="font-size:11px">✎ last edit: ${esc(c._upBy)} · ${esc(fmtWhen(c._upAt))}</div>`:""; }
+function clientShareHtml(c){
+  if(!cloudReady()) return "";
+  const owner=c._owner||curEmail;
+  const isOwner=(c._isOwner!==undefined?c._isOwner:owner===curEmail);
+  const shared=(c._shared||[]).filter(e=>e!==owner);
+  let h=`<div class="card" style="background:#f8fafc"><h3 class="mt0">Team access &amp; edit history</h3>`;
+  h+=`<p class="muted" style="margin:2px 0">Owner: <strong>${esc(owner===curEmail?"you":owner)}</strong>${c._upBy?` · last edited by <strong>${esc(c._upBy)}</strong>${c._upAt?" · "+esc(fmtWhen(c._upAt)):""}`:""}</p>`;
+  if(isOwner){
+    h+=`<label>Share with a teammate (their approved account email)</label>
+    <div class="row"><div style="flex:2"><input id="shareEmail_${c.id}" placeholder="teammate@email.com"></div>
+    <div><button class="btn small" onclick="shareClientAdd('${c.id}')">Share</button></div></div>`;
+    if(shared.length){ h+=`<p class="muted" style="margin:8px 0 2px">Shared with:</p><ul style="list-style:none;margin:0;padding:0">`+
+      shared.map(e=>`<li style="padding:3px 0">${esc(e)} <button class="btn small secondary" style="color:var(--red);border-color:var(--red)" onclick="shareClientRemove('${c.id}','${esc(e)}')">Remove</button></li>`).join("")+`</ul>`; }
+    else h+=`<p class="muted" style="font-size:12px">Not shared with anyone yet.</p>`;
+  } else h+=`<p class="muted">Shared with you by ${esc(owner)}. You can view and edit; only the owner can delete or change who it's shared with.</p>`;
+  const hist=(c._history||[]).slice().reverse();
+  if(hist.length){ h+=`<details style="margin-top:8px"><summary style="font-weight:600;font-size:13px">Edit history (${hist.length})</summary><ul style="list-style:none;margin:6px 0;padding:0;font-size:12.5px">`+
+    hist.map(e=>`<li class="muted" style="padding:2px 0">${esc(e.by||e.email||"someone")} — ${esc(fmtWhen(e.at))}</li>`).join("")+`</ul></details>`; }
+  h+=`</div>`;
+  return h;
+}
+async function shareClientAdd(cid){
+  const c=getClient(cid); if(!c) return;
+  const inp=document.getElementById("shareEmail_"+cid); const em=(inp?inp.value:"").trim();
+  if(!em){ alert("Enter the teammate's email."); return; }
+  const r=await cloudShare(cid,em,true);
+  if(r&&r.ok){ c._shared=r.shared; alert("Shared with "+em+". They'll see this client on their next sync."); drawClientForm(); }
+  else alert((r&&r.error)||"Could not share — check the email and that they have an approved account.");
+}
+async function shareClientRemove(cid,em){
+  const c=getClient(cid); if(!c) return;
+  if(!confirm("Stop sharing this client with "+em+"?")) return;
+  const r=await cloudShare(cid,em,false);
+  if(r&&r.ok){ c._shared=r.shared; drawClientForm(); }
+  else alert((r&&r.error)||"Could not update sharing.");
 }
 </script>
 <script>renderAll();</script>
